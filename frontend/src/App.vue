@@ -1,47 +1,75 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref, onMounted } from 'vue';
+import WordDisplay from './components/WordDisplay.vue';
+import TypeInput from './components/TypeInput.vue';
+
+const currentWord = ref('loading...');
+const isSuccess = ref(false);
+
+const fetchNext = async () => {
+  isSuccess.value = false;
+  const res = await fetch('http://localhost:3000/status');
+  const data = await res.json();
+  currentWord.value = data.current_word;
+};
+
+const handleSuccess = async (word: string) => {
+  console.log(word, "正解！Rustに報告します");
+  isSuccess.value = true;
+  currentWord.value = '';
+
+  await fetch('http://localhost:3000/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word, time_taken: 1.0 }) // 簡易的に1秒固定
+  });
+};
+
+onMounted(fetchNext);
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div class="game-root">
+    <WordDisplay :target="currentWord" />
+      <div v-if="isSuccess">
+        <p class="success-message">Correct!</p>
+        <p class="success-sub-message">Click "Next Word" to continue.</p>
+      </div>
+    <TypeInput :target="currentWord" @success="handleSuccess" />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    <button @click="fetchNext" class="next-button">
+      Next Word
+    </button>
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.game-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f0f0;
 }
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.success-message {
+  color: #42b883;
+  font-size: 2rem;
+  text-align: center;
 }
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.success-sub-message {
+  text-align: center;
+  color: #42b883;
+  font-size: 1.5rem;
+}
+.next-button {
+  margin-top: 2rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #42b883;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>
