@@ -183,6 +183,16 @@ const anyText = fc
   .array(fc.constantFrom(...KANA), { minLength: 1, maxLength: 16 })
   .map((chunks) => chunks.join(""));
 
+/** 促音・撥音を含まない、つまり単位が合成されない原文。 */
+const anySimpleText = fc
+  .array(fc.constantFrom(...KANA.filter((kana) => !"っんッン".includes(kana))), {
+    minLength: 1,
+    maxLength: 16,
+  })
+  .map((chunks) => chunks.join(""));
+
+const anyChunk = fc.constantFrom(...KANA);
+
 describe("romaji の性質", () => {
   test("単位の原文を連結すると元の原文に戻る", () => {
     fc.assert(
@@ -222,13 +232,24 @@ describe("romaji の性質", () => {
     );
   });
 
-  test("推奨する候補は、その単位で最短の綴りになる", () => {
+  test("合成されない単位では、推奨する候補が最短の綴りになる", () => {
     fc.assert(
-      fc.property(anyText, (text) => {
+      fc.property(anySimpleText, (text) => {
         for (const unit of romaji(text)) {
           const shortest = Math.min(...unit.candidates.map((candidate) => candidate.length));
           expect(unit.candidates[0]?.length).toBe(shortest);
         }
+      }),
+    );
+  });
+
+  test("促音・撥音を吸収した単位の推奨は、後続の推奨で終わる", () => {
+    fc.assert(
+      fc.property(anyChunk, fc.constantFrom("っ", "ん"), (chunk, absorbed) => {
+        const following = romaji(chunk)[0]?.candidates[0] ?? "";
+        const composed = romaji(absorbed + chunk)[0]?.candidates[0] ?? "";
+
+        expect(composed.endsWith(following)).toBe(true);
       }),
     );
   });

@@ -77,12 +77,26 @@ function spell(text: string): readonly string[] {
 function geminate(following: readonly string[]): readonly string[] {
   const doubled = following.filter((c) => DOUBLABLE.test(c)).map((c) => c[0]! + c);
   const prefixed = SOKUON_SPELLINGS.flatMap((prefix) => following.map((c) => prefix + c));
-  return orderCandidates([...doubled, ...prefixed]);
+  const head = following[0]!;
+  const recommended = DOUBLABLE.test(head) ? head[0]! + head : SOKUON_SPELLINGS[0] + head;
+  return recommend(recommended, orderCandidates([...doubled, ...prefixed]));
 }
 
 /** 「ん」を後続に吸収させる。n 一文字で済むかは後続の綴り次第。 */
 function nasalize(following: readonly string[]): readonly string[] {
   const single = following.filter((c) => !ABSORBS_SINGLE_N.test(c)).map((c) => "n" + c);
   const prefixed = HATSUON_SPELLINGS.flatMap((prefix) => following.map((c) => prefix + c));
-  return orderCandidates([...single, ...prefixed]);
+  const head = following[0]!;
+  const recommended = ABSORBS_SINGLE_N.test(head) ? HATSUON_SPELLINGS[0] + head : "n" + head;
+  return recommend(recommended, orderCandidates([...single, ...prefixed]));
+}
+
+/**
+ * 合成した単位の推奨を、後続の単位の推奨から作った綴りに差し替える。
+ *
+ * 単純に最短を推すと、「っい」に yyi（い の別綴り yi の子音重ね）のような、
+ * 短いが誰も打たない綴りが出てくる。合成の前後で推奨が繋がっている方が読める。
+ */
+function recommend(recommended: string, candidates: string[]): string[] {
+  return [recommended, ...candidates.filter((candidate) => candidate !== recommended)];
 }
