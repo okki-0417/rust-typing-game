@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { romaji } from "../src/index.ts";
+import { createSession, romaji } from "../src/index.ts";
 
 const sources = (source: string) => romaji(source).map((unit) => unit.source);
 const candidates = (source: string, index = 0) => romaji(source)[index]?.candidates ?? [];
@@ -141,5 +141,451 @@ describe("romaji", () => {
       expect(guide("がっこうへいく")).toBe("gakkouheiku");
       expect(guide("にっぽんちゃちゃちゃ")).toBe("nippontyatyatya");
     });
+  });
+});
+
+/** 読みごとにガイドの綴りをまとめて突き合わせる。どの読みが外れたかが差分に出る。 */
+const expectGuides = (expected: Record<string, string>) => {
+  const actual = Object.fromEntries(Object.keys(expected).map((source) => [source, guide(source)]));
+  expect(actual).toEqual(expected);
+};
+
+/** その綴りで最後まで打ち切れるか。 */
+const accepts = (source: string, keys: string) => {
+  const session = createSession(source, { scheme: romaji });
+  for (const key of keys) {
+    if (session.input(key) === "miss") return false;
+  }
+  return session.done;
+};
+
+describe("romaji のパターン", () => {
+  test("清音", () => {
+    expectGuides({
+      あ: "a",
+      い: "i",
+      う: "u",
+      え: "e",
+      お: "o",
+      か: "ka",
+      き: "ki",
+      く: "ku",
+      け: "ke",
+      こ: "ko",
+      さ: "sa",
+      し: "si",
+      す: "su",
+      せ: "se",
+      そ: "so",
+      た: "ta",
+      ち: "ti",
+      つ: "tu",
+      て: "te",
+      と: "to",
+      な: "na",
+      に: "ni",
+      ぬ: "nu",
+      ね: "ne",
+      の: "no",
+      は: "ha",
+      ひ: "hi",
+      ふ: "hu",
+      へ: "he",
+      ほ: "ho",
+      ま: "ma",
+      み: "mi",
+      む: "mu",
+      め: "me",
+      も: "mo",
+      や: "ya",
+      ゆ: "yu",
+      よ: "yo",
+      ら: "ra",
+      り: "ri",
+      る: "ru",
+      れ: "re",
+      ろ: "ro",
+      わ: "wa",
+      ゐ: "wi",
+      ゑ: "we",
+      を: "wo",
+      ん: "nn",
+    });
+  });
+
+  test("濁音・半濁音", () => {
+    expectGuides({
+      が: "ga",
+      ぎ: "gi",
+      ぐ: "gu",
+      げ: "ge",
+      ご: "go",
+      ざ: "za",
+      じ: "zi",
+      ず: "zu",
+      ぜ: "ze",
+      ぞ: "zo",
+      だ: "da",
+      ぢ: "di",
+      づ: "du",
+      で: "de",
+      ど: "do",
+      ば: "ba",
+      び: "bi",
+      ぶ: "bu",
+      べ: "be",
+      ぼ: "bo",
+      ぱ: "pa",
+      ぴ: "pi",
+      ぷ: "pu",
+      ぺ: "pe",
+      ぽ: "po",
+      ゔ: "vu",
+    });
+  });
+
+  test("小書き", () => {
+    expectGuides({
+      ぁ: "xa",
+      ぃ: "xi",
+      ぅ: "xu",
+      ぇ: "xe",
+      ぉ: "xo",
+      ゃ: "xya",
+      ゅ: "xyu",
+      ょ: "xyo",
+      っ: "xtu",
+      ゎ: "xwa",
+      ゕ: "xka",
+      ゖ: "xke",
+    });
+  });
+
+  test("拗音", () => {
+    expectGuides({
+      きゃ: "kya",
+      きぃ: "kyi",
+      きゅ: "kyu",
+      きぇ: "kye",
+      きょ: "kyo",
+      ぎゃ: "gya",
+      ぎぃ: "gyi",
+      ぎゅ: "gyu",
+      ぎぇ: "gye",
+      ぎょ: "gyo",
+      しゃ: "sya",
+      しぃ: "syi",
+      しゅ: "syu",
+      しぇ: "sye",
+      しょ: "syo",
+      じゃ: "ja",
+      じぃ: "zyi",
+      じゅ: "ju",
+      じぇ: "je",
+      じょ: "jo",
+      ちゃ: "tya",
+      ちぃ: "tyi",
+      ちゅ: "tyu",
+      ちぇ: "tye",
+      ちょ: "tyo",
+      ぢゃ: "dya",
+      ぢぃ: "dyi",
+      ぢゅ: "dyu",
+      ぢぇ: "dye",
+      ぢょ: "dyo",
+      にゃ: "nya",
+      にぃ: "nyi",
+      にゅ: "nyu",
+      にぇ: "nye",
+      にょ: "nyo",
+      ひゃ: "hya",
+      ひぃ: "hyi",
+      ひゅ: "hyu",
+      ひぇ: "hye",
+      ひょ: "hyo",
+      びゃ: "bya",
+      びぃ: "byi",
+      びゅ: "byu",
+      びぇ: "bye",
+      びょ: "byo",
+      ぴゃ: "pya",
+      ぴぃ: "pyi",
+      ぴゅ: "pyu",
+      ぴぇ: "pye",
+      ぴょ: "pyo",
+      みゃ: "mya",
+      みぃ: "myi",
+      みゅ: "myu",
+      みぇ: "mye",
+      みょ: "myo",
+      りゃ: "rya",
+      りぃ: "ryi",
+      りゅ: "ryu",
+      りぇ: "rye",
+      りょ: "ryo",
+    });
+  });
+
+  test("外来音", () => {
+    expectGuides({
+      ふぁ: "fa",
+      ふぃ: "fi",
+      ふぅ: "fwu",
+      ふぇ: "fe",
+      ふぉ: "fo",
+      ふゃ: "fya",
+      ふゅ: "fyu",
+      ふょ: "fyo",
+      ゔぁ: "va",
+      ゔぃ: "vi",
+      ゔぇ: "ve",
+      ゔぉ: "vo",
+      ゔゅ: "vyu",
+      うぁ: "wha",
+      うぃ: "wi",
+      うぇ: "we",
+      うぉ: "who",
+      てぁ: "tha",
+      てぃ: "thi",
+      てゅ: "thu",
+      てぇ: "the",
+      てょ: "tho",
+      でぁ: "dha",
+      でぃ: "dhi",
+      でゅ: "dhu",
+      でぇ: "dhe",
+      でょ: "dho",
+      とぁ: "twa",
+      とぃ: "twi",
+      とぅ: "twu",
+      とぇ: "twe",
+      とぉ: "two",
+      どぁ: "dwa",
+      どぃ: "dwi",
+      どぅ: "dwu",
+      どぇ: "dwe",
+      どぉ: "dwo",
+      くぁ: "qa",
+      くぃ: "qi",
+      くぅ: "qwu",
+      くぇ: "qe",
+      くぉ: "qo",
+      ぐぁ: "gwa",
+      ぐぃ: "gwi",
+      ぐぅ: "gwu",
+      ぐぇ: "gwe",
+      ぐぉ: "gwo",
+      すぁ: "swa",
+      すぃ: "swi",
+      すぅ: "swu",
+      すぇ: "swe",
+      すぉ: "swo",
+      つぁ: "tsa",
+      つぃ: "tsi",
+      つぇ: "tse",
+      つぉ: "tso",
+      いぇ: "ye",
+    });
+  });
+
+  test("促音は後続の子音を重ねる", () => {
+    expectGuides({
+      っか: "kka",
+      っさ: "ssa",
+      った: "tta",
+      っは: "hha",
+      っま: "mma",
+      っや: "yya",
+      っら: "rra",
+      っわ: "wwa",
+      っが: "gga",
+      っざ: "zza",
+      っだ: "dda",
+      っば: "bba",
+      っぱ: "ppa",
+      っゔ: "vvu",
+      っきゃ: "kkya",
+      っしゃ: "ssya",
+      っちゃ: "ttya",
+      っじゃ: "jja",
+      っふぁ: "ffa",
+    });
+  });
+
+  test("促音は重ねられないときだけ xtu になる", () => {
+    expectGuides({
+      っあ: "xtua",
+      っい: "xtui",
+      っう: "xtuu",
+      っえ: "xtue",
+      っお: "xtuo",
+      っな: "xtuna",
+      っに: "xtuni",
+      っん: "xtunn",
+      っー: "xtu-",
+      あっ: "axtu",
+    });
+  });
+
+  test("撥音は後続が繋がらないときだけ n 一文字で済む", () => {
+    expectGuides({
+      んか: "nka",
+      んさ: "nsa",
+      んた: "nta",
+      んは: "nha",
+      んま: "nma",
+      んら: "nra",
+      んわ: "nwa",
+      んが: "nga",
+      んざ: "nza",
+      んだ: "nda",
+      んば: "nba",
+      んぱ: "npa",
+      んゔ: "nvu",
+      んっか: "nkka",
+      んじゃ: "nja",
+      んちゃ: "ntya",
+      んー: "n-",
+    });
+  });
+
+  test("撥音は母音・な行・や行・撥音の前で nn になる", () => {
+    expectGuides({
+      んあ: "nna",
+      んい: "nni",
+      んう: "nnu",
+      んえ: "nne",
+      んお: "nno",
+      んな: "nnna",
+      んに: "nnni",
+      んぬ: "nnnu",
+      んね: "nnne",
+      んの: "nnno",
+      んや: "nnya",
+      んゆ: "nnyu",
+      んよ: "nnyo",
+      んにゃ: "nnnya",
+      ほん: "honn",
+    });
+  });
+
+  test("語", () => {
+    expectGuides({
+      こんにちは: "konnnitiha",
+      ありがとう: "arigatou",
+      がっこう: "gakkou",
+      しんぶん: "sinbunn",
+      きゅうきゅうしゃ: "kyuukyuusya",
+      にっぽん: "nipponn",
+      とうきょう: "toukyou",
+      ひゃくえん: "hyakuenn",
+      しゅっぱつ: "syuppatu",
+      がんばって: "ganbatte",
+      でんしゃ: "densya",
+      きって: "kitte",
+      ざっし: "zassi",
+      まっちゃ: "mattya",
+      びょういん: "byouinn",
+      せんせい: "sensei",
+      あんない: "annnai",
+      たんい: "tanni",
+      ほんや: "honnya",
+      きんようび: "kinnyoubi",
+      しんゆう: "sinnyuu",
+      にんじゃ: "ninja",
+      みんな: "minnna",
+      てんいん: "tenninn",
+      おんがく: "ongaku",
+      えんぴつ: "enpitu",
+      うんどう: "undou",
+    });
+  });
+
+  test("外来語", () => {
+    expectGuides({
+      ファイル: "fairu",
+      フォーク: "fo-ku",
+      ウィスキー: "wisuki-",
+      ジェット: "jetto",
+      チェック: "tyekku",
+      ティッシュ: "thissyu",
+      パーティー: "pa-thi-",
+      シェア: "syea",
+      ヴァイオリン: "vaiorinn",
+      コンピューター: "konpyu-ta-",
+      ソフトウェア: "sohutowea",
+      デュエット: "dhuetto",
+      グァテマラ: "gwatemara",
+      ヴェネツィア: "venetsia",
+    });
+  });
+
+  test("記号・数字", () => {
+    expectGuides({
+      "ケーキ、": "ke-ki,",
+      "まる。": "maru.",
+      "「ねこ」": "[neko]",
+      "えっ！？": "extu!?",
+      "３つ": "3tu",
+      "１００えん": "100enn",
+      ＴＯＫＹＯ: "TOKYO",
+      "なかぐろ・": "nakaguro/",
+    });
+  });
+
+  test("同じ読みを別の綴りでも打てる", () => {
+    const spellings: Record<string, string[]> = {
+      し: ["si", "shi", "ci"],
+      つ: ["tu", "tsu"],
+      ち: ["ti", "chi"],
+      ふ: ["hu", "fu"],
+      じ: ["zi", "ji"],
+      く: ["ku", "cu", "qu"],
+      い: ["i", "yi"],
+      う: ["u", "wu", "whu"],
+      しゃ: ["sya", "sha", "sixya", "silya", "shixya", "cixya"],
+      じゃ: ["ja", "zya", "jya", "zixya", "jilya"],
+      ちゃ: ["tya", "cha", "cya", "tixya", "chilya"],
+      きょ: ["kyo", "kixyo", "kilyo"],
+      ふぁ: ["fa", "fwa", "huxa", "fula"],
+      っこ: ["kko", "cco", "xtuko", "ltuko", "xtsuco", "ltsuco"],
+      っしゃ: ["ssya", "ssha", "xtusya", "ltusha"],
+      んか: ["nka", "nnka", "xnka", "n'ka", "nca", "nnca"],
+      ほん: ["honn", "hon'", "hoxn"],
+      にっぽん: ["nipponn", "nixtuponn", "niltupon'"],
+      こんにちは: ["konnnitiha", "con'nichiha", "koxnnitiha"],
+    };
+
+    const rejected = Object.entries(spellings).flatMap(([source, keys]) =>
+      keys
+        .filter((spelling) => !accepts(source, spelling))
+        .map((spelling) => `${source}: ${spelling}`),
+    );
+    expect(rejected).toEqual([]);
+  });
+
+  test("受け付けてはいけない綴り", () => {
+    const spellings: Record<string, string[]> = {
+      んに: ["nni"],
+      んあ: ["na"],
+      んや: ["nya"],
+      んゆ: ["nyu"],
+      んん: ["nn"],
+      っな: ["nna"],
+      っあ: ["aa"],
+      っい: ["ii"],
+      ほん: ["hon"],
+      きょ: ["kiyo"],
+      ふぁ: ["fua"],
+      し: ["se", "sh"],
+      つ: ["tsi"],
+    };
+
+    const accepted = Object.entries(spellings).flatMap(([source, keys]) =>
+      keys
+        .filter((spelling) => accepts(source, spelling))
+        .map((spelling) => `${source}: ${spelling}`),
+    );
+    expect(accepted).toEqual([]);
   });
 });
