@@ -17,7 +17,7 @@ describe("plain", () => {
     expect(plain("A")[0]?.candidates).toEqual(["A"]);
   });
 
-  test("サロゲートペアを1単位として扱う", () => {
+  test("サロゲートペアを分割しない", () => {
     expect(plain("🍣")).toEqual([{ source: "🍣", candidates: ["🍣"] }]);
   });
 

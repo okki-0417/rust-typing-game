@@ -84,12 +84,24 @@ export function createSession(source: string, options: SessionOptions = {}): Ses
   };
 }
 
-/** 単位 i までに確定する原文の文字数。最後の要素は原文全体の長さになる。 */
+/** キーボードが打てる文字。打鍵列はこれだけで綴られている必要がある。 */
+const TYPABLE = /^[\x20-\x7e]+$/;
+
+/**
+ * 単位 i までに確定する原文の文字数。最後の要素は原文全体の長さになる。
+ *
+ * ついでに単位が打てるものかを確かめる。打鍵列を持たない単位があると
+ * そこで進めなくなるので、遊び始めてからではなくここで気づけるようにする。
+ */
 function sourceOffsets(units: readonly Unit[]): readonly number[] {
   const offsets = [0];
   units.forEach((unit, i) => {
-    if (unit.candidates.length === 0 || unit.candidates.some((c) => c.length === 0)) {
-      throw new TypeError(`Unit[${i}] must have at least one non-empty candidate`);
+    const where = `Unit[${i}] ${JSON.stringify(unit.source)}`;
+    if (unit.candidates.length === 0) throw new TypeError(`${where} has no candidates`);
+    for (const candidate of unit.candidates) {
+      if (!TYPABLE.test(candidate)) {
+        throw new TypeError(`${where} has an untypable candidate ${JSON.stringify(candidate)}`);
+      }
     }
     offsets.push(offsets[i]! + unit.source.length);
   });

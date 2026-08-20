@@ -174,6 +174,10 @@ const KANA = [
   "Z",
   "1",
   " ",
+  "３",
+  "Ａ",
+  "ｂ",
+  "！",
 ];
 const anyText = fc
   .array(fc.constantFrom(...KANA), { minLength: 1, maxLength: 16 })

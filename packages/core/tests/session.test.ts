@@ -129,6 +129,15 @@ describe("createSession", () => {
     expect(session.input("a")).toBe("miss");
   });
 
+  test("キーボードで打てない打鍵列を持つ単位は受け付けない", () => {
+    expect(() =>
+      createSession("級", { scheme: fixed({ source: "級", candidates: ["級"] }) }),
+    ).toThrow(TypeError);
+    expect(() =>
+      createSession("あ", { scheme: fixed({ source: "あ", candidates: ["\n"] }) }),
+    ).toThrow(TypeError);
+  });
+
   test("打鍵列を持たない単位を返す入力方式は受け付けない", () => {
     expect(() => createSession("あ", { scheme: fixed({ source: "あ", candidates: [] }) })).toThrow(
       TypeError,

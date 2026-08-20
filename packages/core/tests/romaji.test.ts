@@ -40,6 +40,10 @@ describe("romaji", () => {
       expect(guide("Ａｂ！")).toBe("Ab!");
     });
 
+    test("綴れない文字は打鍵列にならない", () => {
+      expect(romaji("級")).toEqual([{ source: "級", candidates: ["級"] }]);
+    });
+
     test("カタカナはひらがなと同じ綴りになるが、原文の見た目は保つ", () => {
       expect(sources("カキ")).toEqual(["カ", "キ"]);
       expect(guide("カキ")).toBe("kaki");
