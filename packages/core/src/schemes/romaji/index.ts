@@ -8,7 +8,7 @@ import {
   orderCandidates,
   PUNCTUATION,
   SOKUON_SPELLINGS,
-  toHiragana,
+  normalize,
 } from "./table.ts";
 
 const SOKUON = "っ";
@@ -23,7 +23,7 @@ const HATSUON = "ん";
  * 日本語と英数字が混ざった原文もそのまま扱える。
  */
 export const romaji: Scheme = (source) => {
-  const kana = toHiragana(source);
+  const kana = normalize(source);
   const chunks = chunk(kana);
   const units: Unit[] = [];
 

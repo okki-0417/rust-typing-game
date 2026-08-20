@@ -35,6 +35,11 @@ describe("romaji", () => {
       expect(guide("ケーキ、")).toBe("ke-ki,");
     });
 
+    test("全角の英数字と記号は半角のキーになる", () => {
+      expect(guide("３つ")).toBe("3tu");
+      expect(guide("Ａｂ！")).toBe("Ab!");
+    });
+
     test("カタカナはひらがなと同じ綴りになるが、原文の見た目は保つ", () => {
       expect(sources("カキ")).toEqual(["カ", "キ"]);
       expect(guide("カキ")).toBe("kaki");

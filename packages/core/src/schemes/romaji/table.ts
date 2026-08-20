@@ -227,11 +227,7 @@ export const PUNCTUATION: Readonly<Record<string, readonly string[]>> = {
   "・": ["/"],
   "「": ["["],
   "」": ["]"],
-  "！": ["!"],
-  "？": ["?"],
   "〜": ["~"],
-  "：": [":"],
-  "；": [";"],
   "　": [" "],
 };
 
@@ -241,14 +237,19 @@ export const DOUBLABLE = /^[bcdfghjkmpqrstvwyz]/;
 /** 「ん」を n 一文字で打てない後続。母音・な行・や行・ん が続くと n が繋がってしまう。 */
 export const ABSORBS_SINGLE_N = /^[aiueony]/;
 
-/** カタカナをひらがなに揃える。文字数は変わらない。 */
-export function toHiragana(source: string): string {
-  let hiragana = "";
+/**
+ * 表を引く前に原文を揃える。カタカナはひらがなに、全角の英数字と記号は半角にする。
+ * どちらも1文字が1文字に移るので、原文との文字数の対応が崩れない。
+ */
+export function normalize(source: string): string {
+  let normalized = "";
   for (const char of source) {
     const code = char.codePointAt(0)!;
-    hiragana += code >= 0x30a1 && code <= 0x30f6 ? String.fromCodePoint(code - 0x60) : char;
+    if (code >= 0x30a1 && code <= 0x30f6) normalized += String.fromCodePoint(code - 0x60);
+    else if (code >= 0xff01 && code <= 0xff5e) normalized += String.fromCodePoint(code - 0xfee0);
+    else normalized += char;
   }
-  return hiragana;
+  return normalized;
 }
 
 /** 重複を除き、短い綴りを先頭に寄せる。同じ長さなら元の順を保つ。 */
