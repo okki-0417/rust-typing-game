@@ -1,8 +1,189 @@
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  --bg: #10131a;
+  --panel: #171b24;
+  --line: #262c38;
+  --text: #e7ebf3;
+  --dim: #5a6273;
+  --accent: #6ee7a8;
+  --miss: #ff6b6b;
+
+  --sans: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+#app {
+  position: relative;
+  width: min(880px, 92vw);
+  padding: 32px;
+}
+
+.timer {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.timer__bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.hud {
+  display: flex;
+  gap: 24px;
+  margin: 16px 2px 28px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.hud__value {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  padding: 40px 36px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+.card__text {
+  margin: 0 0 20px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.card__reading {
+  margin: 0 0 24px;
+  font-size: 17px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.card__guide {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.is-done {
+  color: var(--dim);
+}
+
+.is-next {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.card.is-missed {
+  animation: shake 160ms ease-in-out;
+  border-color: var(--miss);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+#app[data-phase="playing"] .overlay {
+  display: none;
+}
+
+.panel {
+  text-align: center;
+}
+
+.panel__title {
+  margin: 0 0 12px;
+  font-size: 34px;
+}
+
+.panel__lead {
+  margin: 0 0 4px;
+}
+
+.panel__note,
+.panel__key {
+  margin: 4px 0 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.panel__key {
+  margin-top: 28px;
+  color: var(--accent);
+}
+
+.panel__rank {
+  margin: 0 0 24px;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.result {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+  justify-content: center;
+}
+
+.result div {
+  display: grid;
+  gap: 6px;
+}
+
+.result dt {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.result dd {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
