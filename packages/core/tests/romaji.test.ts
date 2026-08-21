@@ -1,16 +1,16 @@
 import { describe, expect, test } from "vite-plus/test";
 import { createSession, romaji } from "../src/index.ts";
 
-const sources = (source: string) => romaji(source).map((unit) => unit.source);
+const sources = (source: string) => romaji(source).map((step) => step.source);
 const candidates = (source: string, index = 0) => romaji(source)[index]?.candidates ?? [];
 const guide = (source: string) =>
   romaji(source)
-    .map((unit) => unit.candidates[0])
+    .map((step) => step.candidates[0])
     .join("");
 
 describe("romaji", () => {
   describe("かなの綴り", () => {
-    test("1かなが1単位になる", () => {
+    test("1かなが1区切りになる", () => {
       expect(sources("かき")).toEqual(["か", "き"]);
       expect(candidates("か")).toEqual(["ka", "ca"]);
     });
@@ -22,7 +22,7 @@ describe("romaji", () => {
       expect(guide("し")).toBe("si");
     });
 
-    test("表にない文字はその文字自体を打つ単位になる", () => {
+    test("表にない文字はその文字自体を打つ区切りになる", () => {
       expect(romaji("ab1")).toEqual([
         { source: "a", candidates: ["a"] },
         { source: "b", candidates: ["b"] },
@@ -51,7 +51,7 @@ describe("romaji", () => {
   });
 
   describe("拗音", () => {
-    test("融合した綴りを持つ組み合わせは1単位にまとめる", () => {
+    test("融合した綴りを持つ組み合わせは1区切りにまとめる", () => {
       expect(sources("きょ")).toEqual(["きょ"]);
       expect(guide("きょ")).toBe("kyo");
     });
@@ -64,7 +64,7 @@ describe("romaji", () => {
       );
     });
 
-    test("融合した綴りを持たない組み合わせは単位を分ける", () => {
+    test("融合した綴りを持たない組み合わせは区切りを分ける", () => {
       expect(sources("あぁ")).toEqual(["あ", "ぁ"]);
     });
   });
@@ -87,19 +87,19 @@ describe("romaji", () => {
       expect(candidates("っあ")).toEqual(["xtua", "ltua", "xtsua", "ltsua"]);
     });
 
-    test("「ん」を吸収した単位の前でも子音を重ねない", () => {
+    test("「ん」を吸収した区切りの前でも子音を重ねない", () => {
       expect(candidates("っんこ")).not.toContain("nnko");
       expect(candidates("っんこ")).toContain("xtunko");
     });
 
-    test("後続がなければ促音だけの単位になる", () => {
+    test("後続がなければ促音だけの区切りになる", () => {
       expect(sources("あっ")).toEqual(["あ", "っ"]);
       expect(candidates("あっ", 1)).toEqual(["xtu", "ltu", "xtsu", "ltsu"]);
     });
   });
 
   describe("撥音", () => {
-    test("後続と1単位にまとめ、n 一文字の綴りも受け付ける", () => {
+    test("後続と1区切りにまとめ、n 一文字の綴りも受け付ける", () => {
       expect(sources("んか")).toEqual(["んか"]);
       expect(guide("んか")).toBe("nka");
       expect(candidates("んか")).toEqual(
@@ -123,13 +123,13 @@ describe("romaji", () => {
       expect(candidates("ほん", 1)).toEqual(["nn", "n'", "xn"]);
     });
 
-    test("促音を吸収した単位の前では n 一文字を受け付ける", () => {
+    test("促音を吸収した区切りの前では n 一文字を受け付ける", () => {
       expect(guide("んっか")).toBe("nkka");
     });
   });
 
   describe("原文との対応", () => {
-    test("単位の原文を連結すると元の原文に戻る", () => {
+    test("区切りの原文を連結すると元の原文に戻る", () => {
       const source = "しゃっきんはこんにちはでケーキ";
       expect(sources(source).join("")).toBe(source);
     });
@@ -150,7 +150,7 @@ const expectGuides = (expected: Record<string, string>) => {
 };
 
 const accepts = (source: string, keys: string) => {
-  const session = createSession(source, { scheme: romaji });
+  const session = createSession(source, { mode: romaji });
   for (const key of keys) {
     if (session.input(key) === "miss") return false;
   }

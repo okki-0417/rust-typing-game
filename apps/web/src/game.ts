@@ -45,7 +45,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
   let phase: Phase = "ready";
   let startedAt = 0;
   let challenge = deal();
-  let session = createSession(challenge.reading, { scheme: romaji });
+  let session = createSession(challenge.reading, { mode: romaji });
   let hits = 0;
   let misses = 0;
   let cleared = 0;
@@ -58,7 +58,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
 
   const next = () => {
     challenge = deal();
-    session = createSession(challenge.reading, { scheme: romaji });
+    session = createSession(challenge.reading, { mode: romaji });
   };
 
   const game: Game = {

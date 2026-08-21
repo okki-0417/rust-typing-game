@@ -1,13 +1,13 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
 import { createSession, romaji } from "../src/index.ts";
-import type { InputResult, Scheme, Session, Unit } from "../src/index.ts";
+import type { InputResult, Mode, Session, Step } from "../src/index.ts";
 
 const ACCEPTED_KEYS = ["a", "b", "c"] as const;
 
-// WHY NOT: 候補の長さは本来まちまちだが、単位ごとに揃えないと候補どうしが接頭辞になり、
-// Unit が満たすべき前提を壊した単位で性質を検証してしまう
-const anyUnit = fc.integer({ min: 1, max: 3 }).chain((length) =>
+// WHY NOT: 候補の長さは本来まちまちだが、区切りごとに揃えないと候補どうしが接頭辞になり、
+// Step が満たすべき前提を壊した区切りで性質を検証してしまう
+const anyStep = fc.integer({ min: 1, max: 3 }).chain((length) =>
   fc.record({
     source: fc.string({ minLength: 1, maxLength: 2 }),
     candidates: fc.uniqueArray(
@@ -18,11 +18,11 @@ const anyUnit = fc.integer({ min: 1, max: 3 }).chain((length) =>
     ),
   }),
 );
-const anyUnits = fc.array(anyUnit, { minLength: 1, maxLength: 8 });
+const anySteps = fc.array(anyStep, { minLength: 1, maxLength: 8 });
 
-const sessionOf = (units: Unit[]) => {
-  const scheme: Scheme = () => units;
-  return createSession(units.map((unit) => unit.source).join(""), { scheme });
+const sessionOf = (steps: Step[]) => {
+  const mode: Mode = () => steps;
+  return createSession(steps.map((step) => step.source).join(""), { mode });
 };
 
 const REJECTED_KEY = "z";
@@ -47,8 +47,8 @@ const typePrefix = (session: ReturnType<typeof sessionOf>, ratio: number) => {
 describe("createSession の性質", () => {
   test("推奨された打鍵をたどると必ず打ち切れる", () => {
     fc.assert(
-      fc.property(anyUnits, (units) => {
-        const session = sessionOf(units);
+      fc.property(anySteps, (steps) => {
+        const session = sessionOf(steps);
         const results = typeGuide(session);
 
         expect(results.slice(0, -1).every((result) => result === "hit")).toBe(true);
@@ -61,8 +61,8 @@ describe("createSession の性質", () => {
 
   test("どこまで打ったあとでも、そこからの remaining で打ち切れる", () => {
     fc.assert(
-      fc.property(anyUnits, fc.double({ min: 0, max: 1, noNaN: true }), (units, ratio) => {
-        const session = sessionOf(units);
+      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
+        const session = sessionOf(steps);
         typePrefix(session, ratio);
         for (const key of session.remaining) session.input(key);
 
@@ -73,8 +73,8 @@ describe("createSession の性質", () => {
 
   test("受理されない打鍵は状態を変えない", () => {
     fc.assert(
-      fc.property(anyUnits, fc.double({ min: 0, max: 1, noNaN: true }), (units, ratio) => {
-        const session = sessionOf(units);
+      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
+        const session = sessionOf(steps);
         typePrefix(session, ratio);
         const before = {
           typed: session.typed,
@@ -96,8 +96,8 @@ describe("createSession の性質", () => {
 
   test("typed には受理された打鍵だけが積まれる", () => {
     fc.assert(
-      fc.property(anyUnits, fc.double({ min: 0, max: 1, noNaN: true }), (units, ratio) => {
-        const session = sessionOf(units);
+      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
+        const session = sessionOf(steps);
         typePrefix(session, ratio);
         const typed = session.typed;
 
@@ -109,10 +109,10 @@ describe("createSession の性質", () => {
     );
   });
 
-  test("cursor までの原文は、確定した単位の連結と一致する", () => {
+  test("cursor までの原文は、確定した区切りの連結と一致する", () => {
     fc.assert(
-      fc.property(anyUnits, fc.double({ min: 0, max: 1, noNaN: true }), (units, ratio) => {
-        const session = sessionOf(units);
+      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
+        const session = sessionOf(steps);
         typePrefix(session, ratio);
 
         expect(session.source.startsWith(session.source.slice(0, session.cursor))).toBe(true);
@@ -189,35 +189,35 @@ const anySimpleText = fc
 const anyChunk = fc.constantFrom(...KANA);
 
 describe("romaji の性質", () => {
-  test("単位の原文を連結すると元の原文に戻る", () => {
+  test("区切りの原文を連結すると元の原文に戻る", () => {
     fc.assert(
       fc.property(anyText, (text) => {
         expect(
           romaji(text)
-            .map((unit) => unit.source)
+            .map((step) => step.source)
             .join(""),
         ).toBe(text);
       }),
     );
   });
 
-  test("どの単位も空でない打鍵列を持つ", () => {
+  test("どの区切りも空でない打鍵列を持つ", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        for (const unit of romaji(text)) {
-          expect(unit.candidates.length).toBeGreaterThan(0);
-          expect(unit.candidates.every((candidate) => candidate.length > 0)).toBe(true);
+        for (const step of romaji(text)) {
+          expect(step.candidates.length).toBeGreaterThan(0);
+          expect(step.candidates.every((candidate) => candidate.length > 0)).toBe(true);
         }
       }),
     );
   });
 
-  test("同じ単位の候補は、互いに接頭辞にならない", () => {
+  test("同じ区切りの候補は、互いに接頭辞にならない", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        for (const unit of romaji(text)) {
-          for (const candidate of unit.candidates) {
-            const prefixes = unit.candidates.filter(
+        for (const step of romaji(text)) {
+          for (const candidate of step.candidates) {
+            const prefixes = step.candidates.filter(
               (other) => other !== candidate && candidate.startsWith(other),
             );
             expect(prefixes).toEqual([]);
@@ -227,18 +227,18 @@ describe("romaji の性質", () => {
     );
   });
 
-  test("合成されない単位では、推奨する候補が最短の綴りになる", () => {
+  test("合成されない区切りでは、推奨する候補が最短の綴りになる", () => {
     fc.assert(
       fc.property(anySimpleText, (text) => {
-        for (const unit of romaji(text)) {
-          const shortest = Math.min(...unit.candidates.map((candidate) => candidate.length));
-          expect(unit.candidates[0]?.length).toBe(shortest);
+        for (const step of romaji(text)) {
+          const shortest = Math.min(...step.candidates.map((candidate) => candidate.length));
+          expect(step.candidates[0]?.length).toBe(shortest);
         }
       }),
     );
   });
 
-  test("促音・撥音を吸収した単位の推奨は、後続の推奨で終わる", () => {
+  test("促音・撥音を吸収した区切りの推奨は、後続の推奨で終わる", () => {
     fc.assert(
       fc.property(anyChunk, fc.constantFrom("っ", "ん"), (chunk, absorbed) => {
         const following = romaji(chunk)[0]?.candidates[0] ?? "";
@@ -254,7 +254,7 @@ describe("ローマ字で打ち切れること", () => {
   test("どんな原文でも、ガイドのとおりに打てばミスなく打ち切れる", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        const session = createSession(text, { scheme: romaji });
+        const session = createSession(text, { mode: romaji });
         const results = typeGuide(session);
 
         expect(results.filter((result) => result === "miss")).toEqual([]);

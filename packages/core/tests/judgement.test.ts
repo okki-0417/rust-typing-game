@@ -1,15 +1,15 @@
 import { describe, expect, test } from "vite-plus/test";
 import { createSession } from "../src/index.ts";
-import type { Scheme, Unit } from "../src/index.ts";
+import type { Mode, Step } from "../src/index.ts";
 
 const fixed =
-  (...units: Unit[]): Scheme =>
+  (...steps: Step[]): Mode =>
   () =>
-    units;
+    steps;
 
-const sourceOf = (units: Unit[]) => units.map((unit) => unit.source).join("");
+const sourceOf = (steps: Step[]) => steps.map((step) => step.source).join("");
 
-const sessionOf = (...units: Unit[]) => createSession(sourceOf(units), { scheme: fixed(...units) });
+const sessionOf = (...steps: Step[]) => createSession(sourceOf(steps), { mode: fixed(...steps) });
 
 describe("createSession", () => {
   test("既定の入力方式は原文をそのまま打たせる", () => {
@@ -31,7 +31,7 @@ describe("createSession", () => {
     expect(session.cursor).toBe(2);
   });
 
-  test("単位を打ち切っても、後続があるうちは hit", () => {
+  test("区切りを打ち切っても、後続があるうちは hit", () => {
     const session = sessionOf(
       { source: "あ", candidates: ["a"] },
       { source: "い", candidates: ["i"] },
@@ -65,7 +65,7 @@ describe("createSession", () => {
     expect(session.typed).toBe("si");
   });
 
-  test("候補から外れる打鍵は、その単位の途中でも miss になる", () => {
+  test("候補から外れる打鍵は、その区切りの途中でも miss になる", () => {
     const session = sessionOf({ source: "し", candidates: ["shi", "si"] });
     session.input("s");
 
@@ -73,7 +73,7 @@ describe("createSession", () => {
     expect(session.remaining).toBe("hi");
   });
 
-  test("remaining は後続の単位の推奨候補まで繋げて返す", () => {
+  test("remaining は後続の区切りの推奨候補まで繋げて返す", () => {
     const session = sessionOf(
       { source: "っこ", candidates: ["kko", "xtuko"] },
       { source: "！", candidates: ["!"] },
@@ -84,7 +84,7 @@ describe("createSession", () => {
     expect(session.remaining).toBe("tuko!");
   });
 
-  test("cursor は単位が対応する原文の文字数ぶん進む", () => {
+  test("cursor は区切りが対応する原文の文字数ぶん進む", () => {
     const session = sessionOf(
       { source: "っこ", candidates: ["kko"] },
       { source: "！", candidates: ["!"] },
@@ -128,21 +128,21 @@ describe("createSession", () => {
     expect(session.input("a")).toBe("miss");
   });
 
-  test("キーボードで打てない打鍵列を持つ単位は受け付けない", () => {
+  test("キーボードで打てない打鍵列を持つ区切りは受け付けない", () => {
     expect(() =>
-      createSession("級", { scheme: fixed({ source: "級", candidates: ["級"] }) }),
+      createSession("級", { mode: fixed({ source: "級", candidates: ["級"] }) }),
     ).toThrow(TypeError);
     expect(() =>
-      createSession("あ", { scheme: fixed({ source: "あ", candidates: ["\n"] }) }),
+      createSession("あ", { mode: fixed({ source: "あ", candidates: ["\n"] }) }),
     ).toThrow(TypeError);
   });
 
-  test("打鍵列を持たない単位を返す入力方式は受け付けない", () => {
-    expect(() => createSession("あ", { scheme: fixed({ source: "あ", candidates: [] }) })).toThrow(
+  test("打鍵列を持たない区切りを返す入力方式は受け付けない", () => {
+    expect(() => createSession("あ", { mode: fixed({ source: "あ", candidates: [] }) })).toThrow(
       TypeError,
     );
-    expect(() =>
-      createSession("あ", { scheme: fixed({ source: "あ", candidates: [""] }) }),
-    ).toThrow(TypeError);
+    expect(() => createSession("あ", { mode: fixed({ source: "あ", candidates: [""] }) })).toThrow(
+      TypeError,
+    );
   });
 });

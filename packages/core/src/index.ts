@@ -1,5 +1,5 @@
-export { createSession } from "./session.ts";
-export type { Session, SessionOptions } from "./session.ts";
-export { plain } from "./schemes/plain.ts";
-export { romaji } from "./schemes/romaji/index.ts";
-export type { InputResult, Scheme, Unit } from "./types.ts";
+export { createSession } from "./judgement.ts";
+export type { InputResult, Session, SessionOptions } from "./judgement.ts";
+export { ascii } from "./modes/ascii.ts";
+export { romaji } from "./modes/romaji/index.ts";
+export type { Mode, Step } from "./mode.ts";

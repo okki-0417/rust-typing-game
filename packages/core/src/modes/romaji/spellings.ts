@@ -249,7 +249,3 @@ export function normalize(source: string): string {
   }
   return normalized;
 }
-
-export function orderCandidates(candidates: readonly string[]): string[] {
-  return [...new Set(candidates)].sort((a, b) => a.length - b.length);
-}

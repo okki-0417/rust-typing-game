@@ -1,8 +1,10 @@
-import { plain } from "./schemes/plain.ts";
-import type { InputResult, Scheme, Unit } from "./types.ts";
+import type { Mode, Step } from "./mode.ts";
+import { ascii } from "./modes/ascii.ts";
+
+export type InputResult = "hit" | "miss" | "complete";
 
 export interface SessionOptions {
-  readonly scheme?: Scheme;
+  readonly mode?: Mode;
 }
 
 export interface Session {
@@ -16,17 +18,17 @@ export interface Session {
 }
 
 export function createSession(source: string, options: SessionOptions = {}): Session {
-  const scheme = options.scheme ?? plain;
-  const units = scheme(source);
-  assertTypable(units);
-  const offsets = sourceOffsets(units);
+  const mode = options.mode ?? ascii;
+  const steps = mode(source);
+  assertTypable(steps);
+  const offsets = sourceOffsets(steps);
 
-  let unitIndex = 0;
+  let stepIndex = 0;
   let buffer = "";
   let typed = "";
 
-  const survivors = (unit: Unit, prefix: string): readonly string[] =>
-    unit.candidates.filter((candidate) => candidate.startsWith(prefix));
+  const survivors = (step: Step, prefix: string): readonly string[] =>
+    step.candidates.filter((candidate) => candidate.startsWith(prefix));
 
   return {
     get source() {
@@ -36,20 +38,20 @@ export function createSession(source: string, options: SessionOptions = {}): Ses
       return typed;
     },
     get remaining() {
-      const current = units[unitIndex];
+      const current = steps[stepIndex];
       if (!current) return "";
       let rest = (survivors(current, buffer)[0] ?? "").slice(buffer.length);
-      for (let i = unitIndex + 1; i < units.length; i++) rest += units[i]!.candidates[0];
+      for (let i = stepIndex + 1; i < steps.length; i++) rest += steps[i]!.candidates[0];
       return rest;
     },
     get cursor() {
-      return offsets[unitIndex]!;
+      return offsets[stepIndex]!;
     },
     get done() {
-      return unitIndex >= units.length;
+      return stepIndex >= steps.length;
     },
     input(char) {
-      const current = units[unitIndex];
+      const current = steps[stepIndex];
       if (!current) return "miss";
 
       const next = buffer + char;
@@ -58,15 +60,15 @@ export function createSession(source: string, options: SessionOptions = {}): Ses
 
       typed += char;
       if (alive.includes(next)) {
-        unitIndex++;
+        stepIndex++;
         buffer = "";
-        return unitIndex >= units.length ? "complete" : "hit";
+        return stepIndex >= steps.length ? "complete" : "hit";
       }
       buffer = next;
       return "hit";
     },
     reset() {
-      unitIndex = 0;
+      stepIndex = 0;
       buffer = "";
       typed = "";
     },
@@ -75,11 +77,11 @@ export function createSession(source: string, options: SessionOptions = {}): Ses
 
 const TYPABLE = /^[\x20-\x7e]+$/;
 
-function assertTypable(units: readonly Unit[]): void {
-  units.forEach((unit, i) => {
-    const where = `Unit[${i}] ${JSON.stringify(unit.source)}`;
-    if (unit.candidates.length === 0) throw new TypeError(`${where} has no candidates`);
-    for (const candidate of unit.candidates) {
+function assertTypable(steps: readonly Step[]): void {
+  steps.forEach((step, i) => {
+    const where = `Step[${i}] ${JSON.stringify(step.source)}`;
+    if (step.candidates.length === 0) throw new TypeError(`${where} has no candidates`);
+    for (const candidate of step.candidates) {
       if (!TYPABLE.test(candidate)) {
         throw new TypeError(`${where} has an untypable candidate ${JSON.stringify(candidate)}`);
       }
@@ -87,8 +89,8 @@ function assertTypable(units: readonly Unit[]): void {
   });
 }
 
-function sourceOffsets(units: readonly Unit[]): readonly number[] {
+function sourceOffsets(steps: readonly Step[]): readonly number[] {
   const offsets = [0];
-  units.forEach((unit, i) => offsets.push(offsets[i]! + unit.source.length));
+  steps.forEach((step, i) => offsets.push(offsets[i]! + step.source.length));
   return offsets;
 }

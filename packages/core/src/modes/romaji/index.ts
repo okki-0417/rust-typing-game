@@ -1,42 +1,41 @@
-import type { Scheme, Unit } from "../../types.ts";
+import type { Mode, Step } from "../../mode.ts";
 import {
   ABSORBS_SINGLE_N,
   DIGRAPHS,
   DOUBLABLE,
   HATSUON_SPELLINGS,
   MONOGRAPHS,
-  orderCandidates,
+  normalize,
   PUNCTUATION,
   SOKUON_SPELLINGS,
-  normalize,
-} from "./table.ts";
+} from "./spellings.ts";
 
 const SOKUON = "っ";
 const HATSUON = "ん";
 
-export const romaji: Scheme = (source) => {
-  const units: Unit[] = [];
+export const romaji: Mode = (source) => {
+  const steps: Step[] = [];
 
   for (const { start, length, text } of chunk(normalize(source)).reverse()) {
     const original = source.slice(start, start + length);
-    const following = units[0];
+    const following = steps[0];
 
     if (text === SOKUON && following) {
-      units[0] = {
+      steps[0] = {
         source: original + following.source,
         candidates: geminate(following.candidates),
       };
     } else if (text === HATSUON && following) {
-      units[0] = {
+      steps[0] = {
         source: original + following.source,
         candidates: nasalize(following.candidates),
       };
     } else {
-      units.unshift({ source: original, candidates: spell(text) });
+      steps.unshift({ source: original, candidates: spell(text) });
     }
   }
 
-  return units;
+  return steps;
 };
 
 function chunk(kana: string): { start: number; length: number; text: string }[] {
@@ -76,8 +75,12 @@ function nasalize(following: readonly string[]): readonly string[] {
   return recommend(recommended, orderCandidates([...single, ...prefixed]));
 }
 
+function orderCandidates(candidates: readonly string[]): string[] {
+  return [...new Set(candidates)].sort((a, b) => a.length - b.length);
+}
+
 // WHY NOT: 本来は最短の綴りをそのまま推奨すべきだが、「っい」の yyi のように
-// 短くても誰も打たない綴りが先頭に来るため、後続の単位の推奨に繋がる綴りを推す
+// 短くても誰も打たない綴りが先頭に来るため、後続の区切りの推奨に繋がる綴りを推す
 function recommend(recommended: string, candidates: string[]): string[] {
   return [recommended, ...candidates.filter((candidate) => candidate !== recommended)];
 }
