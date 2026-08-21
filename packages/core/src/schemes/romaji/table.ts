@@ -1,10 +1,7 @@
-/** 「っ」を単独で打つ綴り。後続があるときは接頭辞としても使う。 */
 export const SOKUON_SPELLINGS = ["xtu", "ltu", "xtsu", "ltsu"] as const;
 
-/** 「ん」を確実に確定させる綴り。後続があるときは接頭辞としても使う。 */
 export const HATSUON_SPELLINGS = ["nn", "n'", "xn"] as const;
 
-/** 1かな（＋小書き単独）の綴り。 */
 export const MONOGRAPHS: Readonly<Record<string, readonly string[]>> = {
   あ: ["a"],
   い: ["i", "yi"],
@@ -94,11 +91,6 @@ export const MONOGRAPHS: Readonly<Record<string, readonly string[]>> = {
   ゖ: ["xke", "lke"],
 };
 
-/**
- * 2かなで1打鍵単位になる綴り。ここに載っている組み合わせだけを1単位にまとめる。
- * 「かな＋小書き」を連ねて打つ経路は {@link MONOGRAPHS} から自動生成して足すので、
- * ここには融合した綴り（kya のように分解できないもの）だけを書く。
- */
 export const DIGRAPHS: Readonly<Record<string, readonly string[]>> = {
   きゃ: ["kya"],
   きぃ: ["kyi"],
@@ -221,7 +213,6 @@ export const DIGRAPHS: Readonly<Record<string, readonly string[]>> = {
   いぇ: ["ye"],
 };
 
-/** かな入力中に記号キーが生む文字。 */
 export const PUNCTUATION: Readonly<Record<string, readonly string[]>> = {
   ー: ["-"],
   "、": [","],
@@ -233,31 +224,32 @@ export const PUNCTUATION: Readonly<Record<string, readonly string[]>> = {
   "　": [" "],
 };
 
-/** 「っ」で重ねられる子音。母音・n・小書き接頭辞（x, l）は重ねられない。 */
 export const DOUBLABLE = /^[bcdfghjkmpqrstvwyz]/;
 
-/** 「ん」を n 一文字で打てない後続。母音・な行・や行・ん が続くと n が繋がってしまう。 */
 export const ABSORBS_SINGLE_N = /^[aiueony]/;
 
-/**
- * 表を引く前に原文を揃える。カタカナはひらがなに、全角の英数字と記号は半角にする。
- * どちらも1文字が1文字に移るので、原文との文字数の対応が崩れない。
- */
+const KATAKANA_FIRST = 0x30a1;
+const KATAKANA_LAST = 0x30f6;
+const KATAKANA_TO_HIRAGANA = -0x60;
+const FULLWIDTH_FIRST = 0xff01;
+const FULLWIDTH_LAST = 0xff5e;
+const FULLWIDTH_TO_HALFWIDTH = -0xfee0;
+
 export function normalize(source: string): string {
   let normalized = "";
   for (const char of source) {
     const code = char.codePointAt(0)!;
-    if (code >= 0x30a1 && code <= 0x30f6) normalized += String.fromCodePoint(code - 0x60);
-    else if (code >= 0xff01 && code <= 0xff5e) normalized += String.fromCodePoint(code - 0xfee0);
-    else normalized += char;
+    if (code >= KATAKANA_FIRST && code <= KATAKANA_LAST) {
+      normalized += String.fromCodePoint(code + KATAKANA_TO_HIRAGANA);
+    } else if (code >= FULLWIDTH_FIRST && code <= FULLWIDTH_LAST) {
+      normalized += String.fromCodePoint(code + FULLWIDTH_TO_HALFWIDTH);
+    } else {
+      normalized += char;
+    }
   }
   return normalized;
 }
 
-/** 重複を除き、短い綴りを先頭に寄せる。同じ長さなら元の順を保つ。 */
 export function orderCandidates(candidates: readonly string[]): string[] {
-  return [...new Set(candidates)]
-    .map((candidate, index) => ({ candidate, index }))
-    .sort((a, b) => a.candidate.length - b.candidate.length || a.index - b.index)
-    .map((entry) => entry.candidate);
+  return [...new Set(candidates)].sort((a, b) => a.length - b.length);
 }
