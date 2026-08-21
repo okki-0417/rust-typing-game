@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
-import { createSession, romaji } from "../src/index.ts";
-import type { InputResult, Mode, Session, Step } from "../src/index.ts";
+import { phraseOf, romaji, strike } from "../src/index.ts";
+import type { Mode, Phrase, Step } from "../src/index.ts";
 
 const ACCEPTED_KEYS = ["a", "b", "c"] as const;
 
@@ -20,41 +20,47 @@ const anyStep = fc.integer({ min: 1, max: 3 }).chain((length) =>
 );
 const anySteps = fc.array(anyStep, { minLength: 1, maxLength: 8 });
 
-const sessionOf = (steps: Step[]) => {
+const phraseOfSteps = (steps: Step[]) => {
   const mode: Mode = () => steps;
-  return createSession(steps.map((step) => step.source).join(""), { mode });
+  return phraseOf(steps.map((step) => step.source).join(""), mode);
 };
 
 const REJECTED_KEY = "z";
 
-const typeGuide = (session: Session): InputResult[] => {
-  const results: InputResult[] = [];
-  while (!session.done) {
-    const key = session.remaining.at(0);
+const typeKeys = (phrase: Phrase, keys: string) => {
+  let current = phrase;
+  for (const key of keys) current = strike(current, key).phrase;
+  return current;
+};
+
+const typeGuide = (start: Phrase) => {
+  let phrase = start;
+  let missed = false;
+  while (!phrase.done) {
+    const key = phrase.remaining.at(0);
     if (key === undefined) break;
-    const result = session.input(key);
-    results.push(result);
-    if (result === "miss") break;
+    const struck = strike(phrase, key);
+    phrase = struck.phrase;
+    if (!struck.correct) {
+      missed = true;
+      break;
+    }
   }
-  return results;
+  return { phrase, missed };
 };
 
-const typePrefix = (session: ReturnType<typeof sessionOf>, ratio: number) => {
-  const keys = session.remaining.slice(0, Math.floor(session.remaining.length * ratio));
-  for (const key of keys) session.input(key);
-};
+const typePrefix = (phrase: Phrase, ratio: number) =>
+  typeKeys(phrase, phrase.remaining.slice(0, Math.floor(phrase.remaining.length * ratio)));
 
-describe("createSession の性質", () => {
+describe("文言を打ち進める性質", () => {
   test("推奨された打鍵をたどると必ず打ち切れる", () => {
     fc.assert(
       fc.property(anySteps, (steps) => {
-        const session = sessionOf(steps);
-        const results = typeGuide(session);
+        const { phrase, missed } = typeGuide(phraseOfSteps(steps));
 
-        expect(results.slice(0, -1).every((result) => result === "hit")).toBe(true);
-        expect(results.at(-1)).toBe("complete");
-        expect(session.done).toBe(true);
-        expect(session.cursor).toBe(session.source.length);
+        expect(missed).toBe(false);
+        expect(phrase.done).toBe(true);
+        expect(phrase.cursor).toBe(phrase.source.length);
       }),
     );
   });
@@ -62,49 +68,35 @@ describe("createSession の性質", () => {
   test("どこまで打ったあとでも、そこからの remaining で打ち切れる", () => {
     fc.assert(
       fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const session = sessionOf(steps);
-        typePrefix(session, ratio);
-        for (const key of session.remaining) session.input(key);
+        const started = typePrefix(phraseOfSteps(steps), ratio);
 
-        expect(session.done).toBe(true);
+        expect(typeKeys(started, started.remaining).done).toBe(true);
       }),
     );
   });
 
-  test("受理されない打鍵は状態を変えない", () => {
+  test("受理されない打鍵は文言を進めない", () => {
     fc.assert(
       fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const session = sessionOf(steps);
-        typePrefix(session, ratio);
-        const before = {
-          typed: session.typed,
-          remaining: session.remaining,
-          cursor: session.cursor,
-          done: session.done,
-        };
+        const phrase = typePrefix(phraseOfSteps(steps), ratio);
 
-        expect(session.input(REJECTED_KEY)).toBe("miss");
-        expect({
-          typed: session.typed,
-          remaining: session.remaining,
-          cursor: session.cursor,
-          done: session.done,
-        }).toEqual(before);
+        const struck = strike(phrase, REJECTED_KEY);
+        expect(struck.correct).toBe(false);
+        expect(struck.phrase).toBe(phrase);
       }),
     );
   });
 
-  test("typed には受理された打鍵だけが積まれる", () => {
+  test("打鍵は受け取った文言を書き換えない", () => {
     fc.assert(
       fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const session = sessionOf(steps);
-        typePrefix(session, ratio);
-        const typed = session.typed;
+        const phrase = typePrefix(phraseOfSteps(steps), ratio);
+        const before = { ...phrase };
 
-        session.input(REJECTED_KEY);
-        session.input(REJECTED_KEY);
+        strike(phrase, phrase.remaining.at(0) ?? REJECTED_KEY);
+        strike(phrase, REJECTED_KEY);
 
-        expect(session.typed).toBe(typed);
+        expect({ ...phrase }).toEqual(before);
       }),
     );
   });
@@ -112,11 +104,10 @@ describe("createSession の性質", () => {
   test("cursor までの原文は、確定した区切りの連結と一致する", () => {
     fc.assert(
       fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const session = sessionOf(steps);
-        typePrefix(session, ratio);
+        const phrase = typePrefix(phraseOfSteps(steps), ratio);
 
-        expect(session.source.startsWith(session.source.slice(0, session.cursor))).toBe(true);
-        expect(session.cursor).toBeLessThanOrEqual(session.source.length);
+        expect(phrase.source.startsWith(phrase.source.slice(0, phrase.cursor))).toBe(true);
+        expect(phrase.cursor).toBeLessThanOrEqual(phrase.source.length);
       }),
     );
   });
@@ -254,12 +245,11 @@ describe("ローマ字で打ち切れること", () => {
   test("どんな原文でも、ガイドのとおりに打てばミスなく打ち切れる", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        const session = createSession(text, { mode: romaji });
-        const results = typeGuide(session);
+        const { phrase, missed } = typeGuide(phraseOf(text, romaji));
 
-        expect(results.filter((result) => result === "miss")).toEqual([]);
-        expect(session.done).toBe(true);
-        expect(session.cursor).toBe(text.length);
+        expect(missed).toBe(false);
+        expect(phrase.done).toBe(true);
+        expect(phrase.cursor).toBe(text.length);
       }),
     );
   });

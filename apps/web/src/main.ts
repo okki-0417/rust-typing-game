@@ -22,7 +22,7 @@ window.addEventListener("keydown", (event) => {
   }
 
   if (event.key.length !== 1) return;
-  if (game.input(event.key, performance.now()) === "miss") view.flashMiss();
+  if (game.input(event.key, performance.now()) === false) view.flashMiss();
 });
 
 const frame = () => {

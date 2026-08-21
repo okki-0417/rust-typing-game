@@ -1,5 +1,4 @@
-import { createSession, romaji } from "@typing-game/core";
-import type { InputResult } from "@typing-game/core";
+import { phraseOf, romaji, strike } from "@typing-game/core";
 import type { Challenge } from "./challenges.ts";
 import { createDeck } from "./deck.ts";
 
@@ -33,7 +32,7 @@ export interface GameOptions {
 export interface Game {
   readonly phase: Phase;
   start(now: number): void;
-  input(key: string, now: number): InputResult | null;
+  input(key: string, now: number): boolean | null;
   tick(now: number): void;
   snapshot(now: number): Snapshot;
   reset(): void;
@@ -45,7 +44,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
   let phase: Phase = "ready";
   let startedAt = 0;
   let challenge = deal();
-  let session = createSession(challenge.reading, { mode: romaji });
+  let phrase = phraseOf(challenge.reading, romaji);
   let hits = 0;
   let misses = 0;
   let cleared = 0;
@@ -58,7 +57,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
 
   const next = () => {
     challenge = deal();
-    session = createSession(challenge.reading, { mode: romaji });
+    phrase = phraseOf(challenge.reading, romaji);
   };
 
   const game: Game = {
@@ -80,18 +79,19 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
       game.tick(now);
       if (phase !== "playing") return null;
 
-      const result = session.input(key);
-      if (result === "miss") {
+      const struck = strike(phrase, key);
+      phrase = struck.phrase;
+      if (!struck.correct) {
         misses++;
-        return result;
+        return false;
       }
 
       hits++;
-      if (result === "complete") {
+      if (phrase.done) {
         cleared++;
         next();
       }
-      return result;
+      return true;
     },
 
     tick(now) {
@@ -106,10 +106,10 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
       return {
         phase,
         challenge,
-        typedReading: session.source.slice(0, session.cursor),
-        remainingReading: session.source.slice(session.cursor),
-        typed: session.typed,
-        remaining: session.remaining,
+        typedReading: phrase.source.slice(0, phrase.cursor),
+        remainingReading: phrase.source.slice(phrase.cursor),
+        typed: phrase.typed,
+        remaining: phrase.remaining,
         score: {
           hits,
           misses,
