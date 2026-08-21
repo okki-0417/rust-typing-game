@@ -3,18 +3,16 @@ import { describe, expect, test } from "vite-plus/test";
 import { createSession, romaji } from "../src/index.ts";
 import type { InputResult, Scheme, Session, Unit } from "../src/index.ts";
 
-const KEYS = ["a", "b", "c"] as const;
+const ACCEPTED_KEYS = ["a", "b", "c"] as const;
 
-/**
- * 候補の長さを単位ごとに揃えた単位。
- * 「ある候補が別の候補の接頭辞にならない」という Unit の前提を満たす。
- */
+// WHY NOT: 候補の長さは本来まちまちだが、単位ごとに揃えないと候補どうしが接頭辞になり、
+// Unit が満たすべき前提を壊した単位で性質を検証してしまう
 const anyUnit = fc.integer({ min: 1, max: 3 }).chain((length) =>
   fc.record({
     source: fc.string({ minLength: 1, maxLength: 2 }),
     candidates: fc.uniqueArray(
       fc
-        .array(fc.constantFrom(...KEYS), { minLength: length, maxLength: length })
+        .array(fc.constantFrom(...ACCEPTED_KEYS), { minLength: length, maxLength: length })
         .map((keys) => keys.join("")),
       { minLength: 1, maxLength: 4 },
     ),
@@ -27,10 +25,8 @@ const sessionOf = (units: Unit[]) => {
   return createSession(units.map((unit) => unit.source).join(""), { scheme });
 };
 
-/** KEYS に含まれないので、どの単位でも必ず受理されない打鍵。 */
-const REJECTED = "z";
+const REJECTED_KEY = "z";
 
-/** 推奨経路の先頭を、打ち切るかミスするまで打ち続ける。 */
 const typeGuide = (session: Session): InputResult[] => {
   const results: InputResult[] = [];
   while (!session.done) {
@@ -87,7 +83,7 @@ describe("createSession の性質", () => {
           done: session.done,
         };
 
-        expect(session.input(REJECTED)).toBe("miss");
+        expect(session.input(REJECTED_KEY)).toBe("miss");
         expect({
           typed: session.typed,
           remaining: session.remaining,
@@ -105,8 +101,8 @@ describe("createSession の性質", () => {
         typePrefix(session, ratio);
         const typed = session.typed;
 
-        session.input(REJECTED);
-        session.input(REJECTED);
+        session.input(REJECTED_KEY);
+        session.input(REJECTED_KEY);
 
         expect(session.typed).toBe(typed);
       }),
@@ -183,7 +179,6 @@ const anyText = fc
   .array(fc.constantFrom(...KANA), { minLength: 1, maxLength: 16 })
   .map((chunks) => chunks.join(""));
 
-/** 促音・撥音を含まない、つまり単位が合成されない原文。 */
 const anySimpleText = fc
   .array(fc.constantFrom(...KANA.filter((kana) => !"っんッン".includes(kana))), {
     minLength: 1,

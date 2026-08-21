@@ -3,7 +3,6 @@ import { createSession, romaji } from "../src/index.ts";
 
 const sources = (source: string) => romaji(source).map((unit) => unit.source);
 const candidates = (source: string, index = 0) => romaji(source)[index]?.candidates ?? [];
-/** 推奨経路だけを繋いだ打鍵列。ガイド表示に出るもの。 */
 const guide = (source: string) =>
   romaji(source)
     .map((unit) => unit.candidates[0])
@@ -144,13 +143,12 @@ describe("romaji", () => {
   });
 });
 
-/** 読みごとにガイドの綴りをまとめて突き合わせる。どの読みが外れたかが差分に出る。 */
+// WHY NOT: 1件ずつ expect すべきだが、まとめて突き合わせるとどの読みが外れたかが差分に出る
 const expectGuides = (expected: Record<string, string>) => {
   const actual = Object.fromEntries(Object.keys(expected).map((source) => [source, guide(source)]));
   expect(actual).toEqual(expected);
 };
 
-/** その綴りで最後まで打ち切れるか。 */
 const accepts = (source: string, keys: string) => {
   const session = createSession(source, { scheme: romaji });
   for (const key of keys) {

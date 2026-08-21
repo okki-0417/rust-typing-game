@@ -2,7 +2,6 @@ import { describe, expect, test } from "vite-plus/test";
 import { createSession } from "../src/index.ts";
 import type { Scheme, Unit } from "../src/index.ts";
 
-/** 単位列を直接与える入力方式。判定そのものの仕様だけを見るために使う。 */
 const fixed =
   (...units: Unit[]): Scheme =>
   () =>
