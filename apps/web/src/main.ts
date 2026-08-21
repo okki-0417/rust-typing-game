@@ -10,7 +10,6 @@ const view = createView(root);
 const game = createGame({ challenges, durationMs: DURATION_MS });
 
 window.addEventListener("keydown", (event) => {
-  // 変換中の打鍵は判定に混ぜない。修飾キーつきはブラウザの操作なので触らない。
   if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
 
   if (event.key === " ") {

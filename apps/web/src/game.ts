@@ -6,28 +6,19 @@ import { createDeck } from "./deck.ts";
 export type Phase = "ready" | "playing" | "finished";
 
 export interface Score {
-  /** 受理された打鍵の数。 */
   readonly hits: number;
-  /** 受理されなかった打鍵の数。 */
   readonly misses: number;
-  /** 打ち切った文言の数。 */
   readonly cleared: number;
-  /** 打鍵のうち受理された割合。 */
   readonly accuracy: number;
-  /** 1分あたりの打鍵数。 */
   readonly kpm: number;
 }
 
 export interface Snapshot {
   readonly phase: Phase;
   readonly challenge: Challenge;
-  /** 打ち終わった読み。 */
-  readonly read: string;
-  /** これから打つ読み。 */
-  readonly unread: string;
-  /** 打ち終わった打鍵列。 */
+  readonly typedReading: string;
+  readonly remainingReading: string;
   readonly typed: string;
-  /** これから打つ打鍵列。 */
   readonly remaining: string;
   readonly score: Score;
   readonly leftMs: number;
@@ -41,14 +32,10 @@ export interface GameOptions {
 
 export interface Game {
   readonly phase: Phase;
-  /** 制限時間の計測を始める。 */
   start(now: number): void;
-  /** 1文字を入力する。遊んでいる間以外は受け付けない。 */
   input(key: string, now: number): InputResult | null;
-  /** 時間切れになっていれば終了させる。 */
   tick(now: number): void;
   snapshot(now: number): Snapshot;
-  /** 最初の状態に戻す。 */
   reset(): void;
 }
 
@@ -119,8 +106,8 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
       return {
         phase,
         challenge,
-        read: session.source.slice(0, session.cursor),
-        unread: session.source.slice(session.cursor),
+        typedReading: session.source.slice(0, session.cursor),
+        remainingReading: session.source.slice(session.cursor),
         typed: session.typed,
         remaining: session.remaining,
         score: {

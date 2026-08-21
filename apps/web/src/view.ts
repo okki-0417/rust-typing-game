@@ -2,7 +2,6 @@ import type { Score, Snapshot } from "./game.ts";
 
 export interface View {
   render(snapshot: Snapshot): void;
-  /** 受理されなかった打鍵を知らせる。 */
   flashMiss(): void;
 }
 
@@ -16,7 +15,9 @@ const LAYOUT = `
   </div>
   <section class="card">
     <p class="card__text" data-text></p>
-    <p class="card__reading"><span class="is-done" data-read></span><span data-unread></span></p>
+    <p class="card__reading">
+      <span class="is-done" data-typed-reading></span><span data-remaining-reading></span>
+    </p>
     <p class="card__guide">
       <span class="is-done" data-typed></span><span class="is-next" data-next></span><span data-rest></span>
     </p>
@@ -37,8 +38,8 @@ export function createView(root: HTMLElement): View {
     accuracy: find("[data-accuracy]"),
     cleared: find("[data-cleared]"),
     text: find("[data-text]"),
-    read: find("[data-read]"),
-    unread: find("[data-unread]"),
+    typedReading: find("[data-typed-reading]"),
+    remainingReading: find("[data-remaining-reading]"),
     typed: find("[data-typed]"),
     next: find("[data-next]"),
     rest: find("[data-rest]"),
@@ -54,8 +55,8 @@ export function createView(root: HTMLElement): View {
       slots.cleared.textContent = String(score.cleared);
 
       slots.text.textContent = snapshot.challenge.text;
-      slots.read.textContent = snapshot.read;
-      slots.unread.textContent = snapshot.unread;
+      slots.typedReading.textContent = snapshot.typedReading;
+      slots.remainingReading.textContent = snapshot.remainingReading;
       slots.typed.textContent = snapshot.typed;
       slots.next.textContent = snapshot.remaining.slice(0, 1);
       slots.rest.textContent = snapshot.remaining.slice(1);
@@ -66,7 +67,8 @@ export function createView(root: HTMLElement): View {
 
     flashMiss() {
       card.classList.remove("is-missed");
-      // クラスを付け直してアニメーションを頭から再生させる。
+      // WHY NOT: 値を捨てる式は普通書かないが、レイアウトを読み直させないと
+      // クラスを付け直してもアニメーションが頭から再生されない
       void card.offsetWidth;
       card.classList.add("is-missed");
     },
