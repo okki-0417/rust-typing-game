@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { phraseOf, strike } from "../src/index.ts";
+import { newPhrase, strike } from "../src/index.ts";
 import type { Mode, Step } from "../src/index.ts";
 
 const fixed =
@@ -9,11 +9,11 @@ const fixed =
 
 const sourceOf = (steps: Step[]) => steps.map((step) => step.source).join("");
 
-const phraseOfSteps = (...steps: Step[]) => phraseOf(sourceOf(steps), fixed(...steps));
+const phraseOfSteps = (...steps: Step[]) => newPhrase(sourceOf(steps), fixed(...steps));
 
-describe("phraseOf", () => {
+describe("newPhrase", () => {
   test("既定の入力方式は原文をそのまま打たせる", () => {
-    const phrase = phraseOf("a1!");
+    const phrase = newPhrase("a1!");
 
     expect(phrase.remaining).toBe("a1!");
     expect(phrase.cursor).toBe(0);
@@ -21,7 +21,7 @@ describe("phraseOf", () => {
   });
 
   test("空の原文は最初から打ち切った状態になる", () => {
-    const phrase = phraseOf("");
+    const phrase = newPhrase("");
 
     expect(phrase.done).toBe(true);
     expect(phrase.remaining).toBe("");
@@ -30,13 +30,13 @@ describe("phraseOf", () => {
   });
 
   test("キーボードで打てない打鍵列を持つ区切りは受け付けない", () => {
-    expect(() => phraseOf("級", fixed({ source: "級", candidates: ["級"] }))).toThrow(TypeError);
-    expect(() => phraseOf("あ", fixed({ source: "あ", candidates: ["\n"] }))).toThrow(TypeError);
+    expect(() => newPhrase("級", fixed({ source: "級", candidates: ["級"] }))).toThrow(TypeError);
+    expect(() => newPhrase("あ", fixed({ source: "あ", candidates: ["\n"] }))).toThrow(TypeError);
   });
 
   test("打鍵列を持たない区切りを返す入力方式は受け付けない", () => {
-    expect(() => phraseOf("あ", fixed({ source: "あ", candidates: [] }))).toThrow(TypeError);
-    expect(() => phraseOf("あ", fixed({ source: "あ", candidates: [""] }))).toThrow(TypeError);
+    expect(() => newPhrase("あ", fixed({ source: "あ", candidates: [] }))).toThrow(TypeError);
+    expect(() => newPhrase("あ", fixed({ source: "あ", candidates: [""] }))).toThrow(TypeError);
   });
 });
 

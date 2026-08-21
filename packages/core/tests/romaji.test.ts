@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { phraseOf, romaji, strike } from "../src/index.ts";
+import { newPhrase, romaji, strike } from "../src/index.ts";
 
 const sources = (source: string) => romaji(source).map((step) => step.source);
 const candidates = (source: string, index = 0) => romaji(source)[index]?.candidates ?? [];
@@ -150,7 +150,7 @@ const expectGuides = (expected: Record<string, string>) => {
 };
 
 const accepts = (source: string, keys: string) => {
-  let phrase = phraseOf(source, romaji);
+  let phrase = newPhrase(source, romaji);
   for (const key of keys) {
     const struck = strike(phrase, key);
     if (!struck.correct) return false;

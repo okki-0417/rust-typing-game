@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
-import { phraseOf, romaji, strike } from "../src/index.ts";
+import { newPhrase, romaji, strike } from "../src/index.ts";
 import type { Mode, Phrase, Step } from "../src/index.ts";
 
 const ACCEPTED_KEYS = ["a", "b", "c"] as const;
@@ -22,7 +22,7 @@ const anySteps = fc.array(anyStep, { minLength: 1, maxLength: 8 });
 
 const phraseOfSteps = (steps: Step[]) => {
   const mode: Mode = () => steps;
-  return phraseOf(steps.map((step) => step.source).join(""), mode);
+  return newPhrase(steps.map((step) => step.source).join(""), mode);
 };
 
 const REJECTED_KEY = "z";
@@ -245,7 +245,7 @@ describe("ローマ字で打ち切れること", () => {
   test("どんな原文でも、ガイドのとおりに打てばミスなく打ち切れる", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        const { phrase, missed } = typeGuide(phraseOf(text, romaji));
+        const { phrase, missed } = typeGuide(newPhrase(text, romaji));
 
         expect(missed).toBe(false);
         expect(phrase.done).toBe(true);

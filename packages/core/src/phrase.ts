@@ -20,7 +20,7 @@ export interface Struck {
 
 type Progress = Pick<Phrase, "source" | "steps" | "index" | "pending" | "typed">;
 
-export function phraseOf(source: string, mode: Mode = ascii): Phrase {
+export function newPhrase(source: string, mode: Mode = ascii): Phrase {
   const steps = mode(source);
   assertTypable(steps);
   return phraseAt({ source, steps, index: 0, pending: "", typed: "" });

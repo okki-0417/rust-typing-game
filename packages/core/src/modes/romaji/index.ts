@@ -33,8 +33,14 @@ export const romaji: Mode = (source) => {
   return steps;
 };
 
-function chunk(kana: string): { start: number; length: number; text: string }[] {
-  const chunks: { start: number; length: number; text: string }[] = [];
+interface Chunk {
+  readonly start: number;
+  readonly length: number;
+  readonly text: string;
+}
+
+function chunk(kana: string): Chunk[] {
+  const chunks: Chunk[] = [];
   for (let i = 0; i < kana.length;) {
     const pair = kana.slice(i, i + 2);
     const length = pair.length === 2 && pair in DIGRAPHS ? 2 : 1;
