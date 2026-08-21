@@ -5,6 +5,10 @@ export interface Step {
 
 export type Mode = (source: string) => readonly Step[];
 
+export function newStep(source: string, candidates: readonly string[]): Step {
+  return { source, candidates };
+}
+
 export function survivingCandidates(step: Step, pending: string): readonly string[] {
   return step.candidates.filter((candidate) => candidate.startsWith(pending));
 }

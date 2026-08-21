@@ -1,3 +1,4 @@
+import { newStep } from "../../mode.ts";
 import type { Mode, Step } from "../../mode.ts";
 import {
   ABSORBS_SINGLE_N,
@@ -21,17 +22,11 @@ export const romaji: Mode = (source) => {
     const following = steps[0];
 
     if (text === SOKUON && following) {
-      steps[0] = {
-        source: original + following.source,
-        candidates: geminate(following.candidates),
-      };
+      steps[0] = newStep(original + following.source, geminate(following.candidates));
     } else if (text === HATSUON && following) {
-      steps[0] = {
-        source: original + following.source,
-        candidates: nasalize(following.candidates),
-      };
+      steps[0] = newStep(original + following.source, nasalize(following.candidates));
     } else {
-      steps.unshift({ source: original, candidates: spell(text) });
+      steps.unshift(newStep(original, spell(text)));
     }
   }
 
