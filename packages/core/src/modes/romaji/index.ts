@@ -1,5 +1,5 @@
-import { newStep } from "../../mode.ts";
-import type { Mode, Step } from "../../mode.ts";
+import { newChunk } from "../../mode.ts";
+import type { Chunk, Mode } from "../../mode.ts";
 import {
   ABSORBS_SINGLE_N,
   DIGRAPHS,
@@ -15,40 +15,27 @@ const SOKUON = "っ";
 const HATSUON = "ん";
 
 export const romaji: Mode = (source) => {
-  const steps: Step[] = [];
-
-  for (const { start, length, text } of chunk(normalize(source)).reverse()) {
-    const original = source.slice(start, start + length);
-    const following = steps[0];
-
-    if (text === SOKUON && following) {
-      steps[0] = newStep(original + following.source, geminate(following.candidates));
-    } else if (text === HATSUON && following) {
-      steps[0] = newStep(original + following.source, nasalize(following.candidates));
-    } else {
-      steps.unshift(newStep(original, spell(text)));
-    }
-  }
-
-  return steps;
-};
-
-interface Chunk {
-  readonly start: number;
-  readonly length: number;
-  readonly text: string;
-}
-
-function chunk(kana: string): Chunk[] {
+  const reading = normalize(source);
   const chunks: Chunk[] = [];
-  for (let i = 0; i < kana.length;) {
-    const pair = kana.slice(i, i + 2);
-    const length = pair.length === 2 && pair in DIGRAPHS ? 2 : 1;
-    chunks.push({ start: i, length, text: kana.slice(i, i + length) });
-    i += length;
+
+  for (let i = reading.length; i > 0;) {
+    const length = i >= 2 && reading.slice(i - 2, i) in DIGRAPHS ? 2 : 1;
+    const kana = reading.slice(i - length, i);
+    const original = source.slice(i - length, i);
+    const following = chunks[0];
+
+    if (kana === SOKUON && following) {
+      chunks[0] = newChunk(original + following.source, geminate(following.candidates));
+    } else if (kana === HATSUON && following) {
+      chunks[0] = newChunk(original + following.source, nasalize(following.candidates));
+    } else {
+      chunks.unshift(newChunk(original, spell(kana)));
+    }
+    i -= length;
   }
+
   return chunks;
-}
+};
 
 function spell(text: string): readonly string[] {
   if (text.length === 2) {
@@ -81,7 +68,7 @@ function orderCandidates(candidates: readonly string[]): string[] {
 }
 
 // WHY NOT: 本来は最短の綴りをそのまま推奨すべきだが、「っい」の yyi のように
-// 短くても誰も打たない綴りが先頭に来るため、後続の区切りの推奨に繋がる綴りを推す
+// 短くても誰も打たない綴りが先頭に来るため、後続の塊の推奨に繋がる綴りを推す
 function recommend(recommended: string, candidates: string[]): string[] {
   return [recommended, ...candidates.filter((candidate) => candidate !== recommended)];
 }

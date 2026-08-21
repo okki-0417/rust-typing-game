@@ -1,5 +1,5 @@
 import { assertTypable, recommended, survivingCandidates } from "./mode.ts";
-import type { Mode, Step } from "./mode.ts";
+import type { Chunk, Mode } from "./mode.ts";
 import { ascii } from "./modes/ascii.ts";
 
 export interface Phrase {
@@ -8,7 +8,7 @@ export interface Phrase {
   readonly remaining: string;
   readonly cursor: number;
   readonly done: boolean;
-  readonly steps: readonly Step[];
+  readonly chunks: readonly Chunk[];
   readonly index: number;
   readonly pending: string;
 }
@@ -18,27 +18,27 @@ export interface Struck {
   readonly correct: boolean;
 }
 
-type Progress = Pick<Phrase, "source" | "steps" | "index" | "pending" | "typed">;
+type Progress = Pick<Phrase, "source" | "chunks" | "index" | "pending" | "typed">;
 
 export function newPhrase(source: string, mode: Mode = ascii): Phrase {
-  const steps = mode(source);
-  assertTypable(steps);
-  return phraseAt({ source, steps, index: 0, pending: "", typed: "" });
+  const chunks = mode(source);
+  assertTypable(chunks);
+  return phraseAt({ source, chunks, index: 0, pending: "", typed: "" });
 }
 
 export function strike(phrase: Phrase, key: string): Struck {
-  const step = phrase.steps[phrase.index];
-  if (!step) return { phrase, correct: false };
+  const chunk = phrase.chunks[phrase.index];
+  if (!chunk) return { phrase, correct: false };
 
   const pending = phrase.pending + key;
-  const alive = survivingCandidates(step, pending);
+  const alive = survivingCandidates(chunk, pending);
   if (alive.length === 0) return { phrase, correct: false };
 
   const settled = alive.includes(pending);
   return {
     phrase: phraseAt({
       source: phrase.source,
-      steps: phrase.steps,
+      chunks: phrase.chunks,
       index: settled ? phrase.index + 1 : phrase.index,
       pending: settled ? "" : pending,
       typed: phrase.typed + key,
@@ -48,25 +48,25 @@ export function strike(phrase: Phrase, key: string): Struck {
 }
 
 function phraseAt(progress: Progress): Phrase {
-  const { steps, index, pending } = progress;
+  const { chunks, index, pending } = progress;
   return {
     ...progress,
-    remaining: remainingKeys(steps, index, pending),
-    cursor: sourceCursor(steps, index),
-    done: index >= steps.length,
+    remaining: remainingKeys(chunks, index, pending),
+    cursor: sourceCursor(chunks, index),
+    done: index >= chunks.length,
   };
 }
 
-function remainingKeys(steps: readonly Step[], index: number, pending: string): string {
-  const step = steps[index];
-  if (!step) return "";
-  let keys = (survivingCandidates(step, pending)[0] ?? "").slice(pending.length);
-  for (let i = index + 1; i < steps.length; i++) keys += recommended(steps[i]!);
+function remainingKeys(chunks: readonly Chunk[], index: number, pending: string): string {
+  const chunk = chunks[index];
+  if (!chunk) return "";
+  let keys = (survivingCandidates(chunk, pending)[0] ?? "").slice(pending.length);
+  for (let i = index + 1; i < chunks.length; i++) keys += recommended(chunks[i]!);
   return keys;
 }
 
-function sourceCursor(steps: readonly Step[], index: number): number {
+function sourceCursor(chunks: readonly Chunk[], index: number): number {
   let cursor = 0;
-  for (let i = 0; i < index; i++) cursor += steps[i]!.source.length;
+  for (let i = 0; i < index; i++) cursor += chunks[i]!.source.length;
   return cursor;
 }

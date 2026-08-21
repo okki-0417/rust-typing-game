@@ -1,13 +1,13 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
 import { newPhrase, romaji, strike } from "../src/index.ts";
-import type { Mode, Phrase, Step } from "../src/index.ts";
+import type { Chunk, Mode, Phrase } from "../src/index.ts";
 
 const ACCEPTED_KEYS = ["a", "b", "c"] as const;
 
-// WHY NOT: 候補の長さは本来まちまちだが、区切りごとに揃えないと候補どうしが接頭辞になり、
-// Step が満たすべき前提を壊した区切りで性質を検証してしまう
-const anyStep = fc.integer({ min: 1, max: 3 }).chain((length) =>
+// WHY NOT: 候補の長さは本来まちまちだが、塊ごとに揃えないと候補どうしが接頭辞になり、
+// Chunk が満たすべき前提を壊した塊で性質を検証してしまう
+const anyChunk = fc.integer({ min: 1, max: 3 }).chain((length) =>
   fc.record({
     source: fc.string({ minLength: 1, maxLength: 2 }),
     candidates: fc.uniqueArray(
@@ -18,11 +18,11 @@ const anyStep = fc.integer({ min: 1, max: 3 }).chain((length) =>
     ),
   }),
 );
-const anySteps = fc.array(anyStep, { minLength: 1, maxLength: 8 });
+const anyChunks = fc.array(anyChunk, { minLength: 1, maxLength: 8 });
 
-const phraseOfSteps = (steps: Step[]) => {
-  const mode: Mode = () => steps;
-  return newPhrase(steps.map((step) => step.source).join(""), mode);
+const phraseOfChunks = (chunks: Chunk[]) => {
+  const mode: Mode = () => chunks;
+  return newPhrase(chunks.map((chunk) => chunk.source).join(""), mode);
 };
 
 const REJECTED_KEY = "z";
@@ -55,8 +55,8 @@ const typePrefix = (phrase: Phrase, ratio: number) =>
 describe("文言を打ち進める性質", () => {
   test("推奨された打鍵をたどると必ず打ち切れる", () => {
     fc.assert(
-      fc.property(anySteps, (steps) => {
-        const { phrase, missed } = typeGuide(phraseOfSteps(steps));
+      fc.property(anyChunks, (chunks) => {
+        const { phrase, missed } = typeGuide(phraseOfChunks(chunks));
 
         expect(missed).toBe(false);
         expect(phrase.done).toBe(true);
@@ -67,8 +67,8 @@ describe("文言を打ち進める性質", () => {
 
   test("どこまで打ったあとでも、そこからの remaining で打ち切れる", () => {
     fc.assert(
-      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const started = typePrefix(phraseOfSteps(steps), ratio);
+      fc.property(anyChunks, fc.double({ min: 0, max: 1, noNaN: true }), (chunks, ratio) => {
+        const started = typePrefix(phraseOfChunks(chunks), ratio);
 
         expect(typeKeys(started, started.remaining).done).toBe(true);
       }),
@@ -77,8 +77,8 @@ describe("文言を打ち進める性質", () => {
 
   test("受理されない打鍵は文言を進めない", () => {
     fc.assert(
-      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const phrase = typePrefix(phraseOfSteps(steps), ratio);
+      fc.property(anyChunks, fc.double({ min: 0, max: 1, noNaN: true }), (chunks, ratio) => {
+        const phrase = typePrefix(phraseOfChunks(chunks), ratio);
 
         const struck = strike(phrase, REJECTED_KEY);
         expect(struck.correct).toBe(false);
@@ -89,8 +89,8 @@ describe("文言を打ち進める性質", () => {
 
   test("打鍵は受け取った文言を書き換えない", () => {
     fc.assert(
-      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const phrase = typePrefix(phraseOfSteps(steps), ratio);
+      fc.property(anyChunks, fc.double({ min: 0, max: 1, noNaN: true }), (chunks, ratio) => {
+        const phrase = typePrefix(phraseOfChunks(chunks), ratio);
         const before = { ...phrase };
 
         strike(phrase, phrase.remaining.at(0) ?? REJECTED_KEY);
@@ -101,10 +101,10 @@ describe("文言を打ち進める性質", () => {
     );
   });
 
-  test("cursor までの原文は、確定した区切りの連結と一致する", () => {
+  test("cursor までの原文は、確定した塊の連結と一致する", () => {
     fc.assert(
-      fc.property(anySteps, fc.double({ min: 0, max: 1, noNaN: true }), (steps, ratio) => {
-        const phrase = typePrefix(phraseOfSteps(steps), ratio);
+      fc.property(anyChunks, fc.double({ min: 0, max: 1, noNaN: true }), (chunks, ratio) => {
+        const phrase = typePrefix(phraseOfChunks(chunks), ratio);
 
         expect(phrase.source.startsWith(phrase.source.slice(0, phrase.cursor))).toBe(true);
         expect(phrase.cursor).toBeLessThanOrEqual(phrase.source.length);
@@ -168,47 +168,47 @@ const KANA = [
 ];
 const anyText = fc
   .array(fc.constantFrom(...KANA), { minLength: 1, maxLength: 16 })
-  .map((chunks) => chunks.join(""));
+  .map((kana) => kana.join(""));
 
 const anySimpleText = fc
   .array(fc.constantFrom(...KANA.filter((kana) => !"っんッン".includes(kana))), {
     minLength: 1,
     maxLength: 16,
   })
-  .map((chunks) => chunks.join(""));
+  .map((kana) => kana.join(""));
 
-const anyChunk = fc.constantFrom(...KANA);
+const anyKana = fc.constantFrom(...KANA);
 
 describe("romaji の性質", () => {
-  test("区切りの原文を連結すると元の原文に戻る", () => {
+  test("塊の原文を連結すると元の原文に戻る", () => {
     fc.assert(
       fc.property(anyText, (text) => {
         expect(
           romaji(text)
-            .map((step) => step.source)
+            .map((chunk) => chunk.source)
             .join(""),
         ).toBe(text);
       }),
     );
   });
 
-  test("どの区切りも空でない打鍵列を持つ", () => {
+  test("どの塊も空でない打鍵列を持つ", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        for (const step of romaji(text)) {
-          expect(step.candidates.length).toBeGreaterThan(0);
-          expect(step.candidates.every((candidate) => candidate.length > 0)).toBe(true);
+        for (const chunk of romaji(text)) {
+          expect(chunk.candidates.length).toBeGreaterThan(0);
+          expect(chunk.candidates.every((candidate) => candidate.length > 0)).toBe(true);
         }
       }),
     );
   });
 
-  test("同じ区切りの候補は、互いに接頭辞にならない", () => {
+  test("同じ塊の候補は、互いに接頭辞にならない", () => {
     fc.assert(
       fc.property(anyText, (text) => {
-        for (const step of romaji(text)) {
-          for (const candidate of step.candidates) {
-            const prefixes = step.candidates.filter(
+        for (const chunk of romaji(text)) {
+          for (const candidate of chunk.candidates) {
+            const prefixes = chunk.candidates.filter(
               (other) => other !== candidate && candidate.startsWith(other),
             );
             expect(prefixes).toEqual([]);
@@ -218,22 +218,22 @@ describe("romaji の性質", () => {
     );
   });
 
-  test("合成されない区切りでは、推奨する候補が最短の綴りになる", () => {
+  test("合成されない塊では、推奨する候補が最短の綴りになる", () => {
     fc.assert(
       fc.property(anySimpleText, (text) => {
-        for (const step of romaji(text)) {
-          const shortest = Math.min(...step.candidates.map((candidate) => candidate.length));
-          expect(step.candidates[0]?.length).toBe(shortest);
+        for (const chunk of romaji(text)) {
+          const shortest = Math.min(...chunk.candidates.map((candidate) => candidate.length));
+          expect(chunk.candidates[0]?.length).toBe(shortest);
         }
       }),
     );
   });
 
-  test("促音・撥音を吸収した区切りの推奨は、後続の推奨で終わる", () => {
+  test("促音・撥音を吸収した塊の推奨は、後続の推奨で終わる", () => {
     fc.assert(
-      fc.property(anyChunk, fc.constantFrom("っ", "ん"), (chunk, absorbed) => {
-        const following = romaji(chunk)[0]?.candidates[0] ?? "";
-        const composed = romaji(absorbed + chunk)[0]?.candidates[0] ?? "";
+      fc.property(anyKana, fc.constantFrom("っ", "ん"), (kana, absorbed) => {
+        const following = romaji(kana)[0]?.candidates[0] ?? "";
+        const composed = romaji(absorbed + kana)[0]?.candidates[0] ?? "";
 
         expect(composed.endsWith(following)).toBe(true);
       }),

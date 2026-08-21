@@ -1,15 +1,15 @@
 import { describe, expect, test } from "vite-plus/test";
 import { newPhrase, strike } from "../src/index.ts";
-import type { Mode, Step } from "../src/index.ts";
+import type { Chunk, Mode } from "../src/index.ts";
 
 const fixed =
-  (...steps: Step[]): Mode =>
+  (...chunks: Chunk[]): Mode =>
   () =>
-    steps;
+    chunks;
 
-const sourceOf = (steps: Step[]) => steps.map((step) => step.source).join("");
+const sourceOf = (chunks: Chunk[]) => chunks.map((chunk) => chunk.source).join("");
 
-const phraseOfSteps = (...steps: Step[]) => newPhrase(sourceOf(steps), fixed(...steps));
+const phraseOfChunks = (...chunks: Chunk[]) => newPhrase(sourceOf(chunks), fixed(...chunks));
 
 describe("newPhrase", () => {
   test("既定の入力方式は原文をそのまま打たせる", () => {
@@ -29,12 +29,12 @@ describe("newPhrase", () => {
     expect(strike(phrase, "a").correct).toBe(false);
   });
 
-  test("キーボードで打てない打鍵列を持つ区切りは受け付けない", () => {
+  test("キーボードで打てない打鍵列を持つ塊は受け付けない", () => {
     expect(() => newPhrase("級", fixed({ source: "級", candidates: ["級"] }))).toThrow(TypeError);
     expect(() => newPhrase("あ", fixed({ source: "あ", candidates: ["\n"] }))).toThrow(TypeError);
   });
 
-  test("打鍵列を持たない区切りを返す入力方式は受け付けない", () => {
+  test("打鍵列を持たない塊を返す入力方式は受け付けない", () => {
     expect(() => newPhrase("あ", fixed({ source: "あ", candidates: [] }))).toThrow(TypeError);
     expect(() => newPhrase("あ", fixed({ source: "あ", candidates: [""] }))).toThrow(TypeError);
   });
@@ -42,7 +42,7 @@ describe("newPhrase", () => {
 
 describe("strike", () => {
   test("受理した打鍵は correct で、原文を打ち切ると done になる", () => {
-    const start = phraseOfSteps({ source: "ab", candidates: ["ab"] });
+    const start = phraseOfChunks({ source: "ab", candidates: ["ab"] });
 
     const a = strike(start, "a");
     expect(a.correct).toBe(true);
@@ -56,8 +56,8 @@ describe("strike", () => {
     expect(b.phrase.cursor).toBe(2);
   });
 
-  test("区切りを打ち切っても、後続があるうちは done にならない", () => {
-    const start = phraseOfSteps(
+  test("塊を打ち切っても、後続があるうちは done にならない", () => {
+    const start = phraseOfChunks(
       { source: "あ", candidates: ["a"] },
       { source: "い", candidates: ["i"] },
     );
@@ -69,7 +69,7 @@ describe("strike", () => {
   });
 
   test("受理されない打鍵は文言を進めず、同じ文言をそのまま返す", () => {
-    const typed = strike(phraseOfSteps({ source: "ab", candidates: ["ab"] }), "a").phrase;
+    const typed = strike(phraseOfChunks({ source: "ab", candidates: ["ab"] }), "a").phrase;
 
     const missed = strike(typed, "z");
     expect(missed.correct).toBe(false);
@@ -79,7 +79,7 @@ describe("strike", () => {
   });
 
   test("打鍵は受け取った文言を書き換えない", () => {
-    const start = phraseOfSteps({ source: "し", candidates: ["shi", "si"] });
+    const start = phraseOfChunks({ source: "し", candidates: ["shi", "si"] });
 
     strike(start, "s");
 
@@ -89,7 +89,7 @@ describe("strike", () => {
   });
 
   test("候補が複数あるとき、remaining は打った経路に追従する", () => {
-    const start = phraseOfSteps({ source: "し", candidates: ["shi", "si"] });
+    const start = phraseOfChunks({ source: "し", candidates: ["shi", "si"] });
     expect(start.remaining).toBe("shi");
 
     const s = strike(start, "s").phrase;
@@ -100,15 +100,15 @@ describe("strike", () => {
     expect(si.phrase.typed).toBe("si");
   });
 
-  test("候補から外れる打鍵は、その区切りの途中でも受理しない", () => {
-    const s = strike(phraseOfSteps({ source: "し", candidates: ["shi", "si"] }), "s").phrase;
+  test("候補から外れる打鍵は、その塊の途中でも受理しない", () => {
+    const s = strike(phraseOfChunks({ source: "し", candidates: ["shi", "si"] }), "s").phrase;
 
     expect(strike(s, "a").correct).toBe(false);
     expect(s.remaining).toBe("hi");
   });
 
-  test("remaining は後続の区切りの推奨候補まで繋げて返す", () => {
-    const start = phraseOfSteps(
+  test("remaining は後続の塊の推奨候補まで繋げて返す", () => {
+    const start = phraseOfChunks(
       { source: "っこ", candidates: ["kko", "xtuko"] },
       { source: "！", candidates: ["!"] },
     );
@@ -117,8 +117,8 @@ describe("strike", () => {
     expect(strike(start, "x").phrase.remaining).toBe("tuko!");
   });
 
-  test("cursor は区切りが対応する原文の文字数ぶん進む", () => {
-    const start = phraseOfSteps(
+  test("cursor は塊が対応する原文の文字数ぶん進む", () => {
+    const start = phraseOfChunks(
       { source: "っこ", candidates: ["kko"] },
       { source: "！", candidates: ["!"] },
     );
@@ -133,7 +133,7 @@ describe("strike", () => {
   });
 
   test("打ち切ったあとの打鍵は受理しない", () => {
-    const done = strike(phraseOfSteps({ source: "あ", candidates: ["a"] }), "a").phrase;
+    const done = strike(phraseOfChunks({ source: "あ", candidates: ["a"] }), "a").phrase;
 
     const after = strike(done, "a");
     expect(after.correct).toBe(false);
