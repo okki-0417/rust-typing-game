@@ -1,6 +1,6 @@
-export { cursor, isDone, newPhrase, remaining } from "./phrase.ts";
+export { cursor, isDone, newPhrase } from "./phrase.ts";
 export type { Phrase } from "./phrase.ts";
-export { strike } from "./strike.ts";
+export { remaining, strike } from "./strike.ts";
 export type { Strike } from "./strike.ts";
 export { interpret } from "./interpret.ts";
 export type { Mode } from "./interpret.ts";
