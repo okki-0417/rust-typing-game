@@ -1,5 +1,6 @@
-import { newChunk } from "../../mode.ts";
-import type { Chunk, Mode } from "../../mode.ts";
+import { newChunk } from "../../chunk.ts";
+import type { Chunk } from "../../chunk.ts";
+import type { Mode } from "../../mode.ts";
 import {
   ABSORBS_SINGLE_N,
   DIGRAPHS,

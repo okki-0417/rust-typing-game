@@ -1,5 +1,6 @@
-import { assertTypable, isAccepted, isCompleted, preferred } from "./mode.ts";
-import type { Chunk, Mode } from "./mode.ts";
+import { assertTypable, isAccepted, isCompleted, preferred } from "./chunk.ts";
+import type { Chunk } from "./chunk.ts";
+import type { Mode } from "./mode.ts";
 import { ascii } from "./modes/ascii.ts";
 
 export interface Phrase {
