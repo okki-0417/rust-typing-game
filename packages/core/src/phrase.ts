@@ -1,7 +1,7 @@
 import type { Chunk } from "./chunk.ts";
 import { interpret } from "./interpret.ts";
 import type { Mode } from "./interpret.ts";
-import { preferred } from "./judgement.ts";
+import { newJudgement, preferred } from "./judgement.ts";
 
 export interface Progress {
   readonly source: string;
@@ -38,9 +38,8 @@ function remainingKeys(chunks: readonly Chunk[], index: number, inputs: string):
   const chunk = chunks[index];
   if (!chunk) return "";
 
-  let keys = preferred({ chunk, inputs }).slice(inputs.length);
-  for (let i = index + 1; i < chunks.length; i++)
-    keys += preferred({ chunk: chunks[i]!, inputs: "" });
+  let keys = preferred(newJudgement(chunk, inputs)).slice(inputs.length);
+  for (let i = index + 1; i < chunks.length; i++) keys += preferred(newJudgement(chunks[i]!, ""));
   return keys;
 }
 

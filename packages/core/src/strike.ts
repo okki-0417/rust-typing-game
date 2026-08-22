@@ -1,4 +1,4 @@
-import { isAccepted, isCompleted } from "./judgement.ts";
+import { isAccepted, isCompleted, newJudgement } from "./judgement.ts";
 import { phraseAt } from "./phrase.ts";
 import type { Phrase } from "./phrase.ts";
 
@@ -19,9 +19,10 @@ export function strike(strike: Strike): Struck {
   if (!chunk) return { phrase, isCorrect: false };
 
   const inputs = phrase.inputs + key;
-  if (!isAccepted({ chunk, inputs })) return { phrase, isCorrect: false };
+  const judgement = newJudgement(chunk, inputs);
+  if (!isAccepted(judgement)) return { phrase, isCorrect: false };
 
-  const settled = isCompleted({ chunk, inputs });
+  const settled = isCompleted(judgement);
   return {
     phrase: phraseAt({
       source: phrase.source,
