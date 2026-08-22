@@ -1,32 +1,32 @@
 import { describe, expect, test } from "vite-plus/test";
 import { newPhrase, romaji, strike } from "../src/index.ts";
 
-const sources = (source: string) => romaji(source).map((chunk) => chunk.source);
-const candidates = (source: string, index = 0) => romaji(source)[index]?.candidates ?? [];
+const sources = (source: string) => romaji(source).map((chunk) => chunk.chars);
+const paths = (source: string, index = 0) => romaji(source)[index]?.paths ?? [];
 const guide = (source: string) =>
   romaji(source)
-    .map((chunk) => chunk.candidates[0])
+    .map((chunk) => chunk.paths[0])
     .join("");
 
 describe("romaji", () => {
   describe("かなの綴り", () => {
     test("1かなが1塊になる", () => {
       expect(sources("かき")).toEqual(["か", "き"]);
-      expect(candidates("か")).toEqual(["ka", "ca"]);
+      expect(paths("か")).toEqual(["ka", "ca"]);
     });
 
     test("複数の綴りを持つかなは全部受け付け、最短を推奨する", () => {
-      expect(candidates("し")).toEqual(["si", "ci", "shi"]);
-      expect(candidates("つ")).toContain("tsu");
-      expect(candidates("ふ")).toContain("fu");
+      expect(paths("し")).toEqual(["si", "ci", "shi"]);
+      expect(paths("つ")).toContain("tsu");
+      expect(paths("ふ")).toContain("fu");
       expect(guide("し")).toBe("si");
     });
 
     test("表にない文字はその文字自体を打つ塊になる", () => {
       expect(romaji("ab1")).toEqual([
-        { source: "a", candidates: ["a"] },
-        { source: "b", candidates: ["b"] },
-        { source: "1", candidates: ["1"] },
+        { chars: "a", paths: ["a"] },
+        { chars: "b", paths: ["b"] },
+        { chars: "1", paths: ["1"] },
       ]);
     });
 
@@ -39,8 +39,8 @@ describe("romaji", () => {
       expect(guide("Ａｂ！")).toBe("Ab!");
     });
 
-    test("綴れない文字は打鍵列にならない", () => {
-      expect(romaji("級")).toEqual([{ source: "級", candidates: ["級"] }]);
+    test("綴れない文字は経路にならない", () => {
+      expect(romaji("級")).toEqual([{ chars: "級", paths: ["級"] }]);
     });
 
     test("カタカナはひらがなと同じ綴りになるが、原文の見た目は保つ", () => {
@@ -57,11 +57,9 @@ describe("romaji", () => {
     });
 
     test("かなを分けて打つ経路も受け付ける", () => {
-      expect(candidates("きょ")).toContain("kixyo");
-      expect(candidates("きょ")).toContain("kilyo");
-      expect(candidates("じゃ")).toEqual(
-        expect.arrayContaining(["ja", "zya", "jya", "zixya", "jilya"]),
-      );
+      expect(paths("きょ")).toContain("kixyo");
+      expect(paths("きょ")).toContain("kilyo");
+      expect(paths("じゃ")).toEqual(expect.arrayContaining(["ja", "zya", "jya", "zixya", "jilya"]));
     });
 
     test("融合した綴りを持たない組み合わせは塊を分ける", () => {
@@ -73,28 +71,28 @@ describe("romaji", () => {
     test("後続の子音を重ねる綴りと、xtu を前置する綴りの両方を受け付ける", () => {
       expect(sources("っこ")).toEqual(["っこ"]);
       expect(guide("っこ")).toBe("kko");
-      expect(candidates("っこ")).toEqual(
+      expect(paths("っこ")).toEqual(
         expect.arrayContaining(["kko", "cco", "xtuko", "ltuko", "xtsuco"]),
       );
     });
 
     test("拗音の前でも子音を重ねられる", () => {
       expect(guide("っしゃ")).toBe("ssya");
-      expect(candidates("っしゃ")).toContain("ssha");
+      expect(paths("っしゃ")).toContain("ssha");
     });
 
     test("母音の前では子音を重ねられない", () => {
-      expect(candidates("っあ")).toEqual(["xtua", "ltua", "xtsua", "ltsua"]);
+      expect(paths("っあ")).toEqual(["xtua", "ltua", "xtsua", "ltsua"]);
     });
 
     test("「ん」を吸収した塊の前でも子音を重ねない", () => {
-      expect(candidates("っんこ")).not.toContain("nnko");
-      expect(candidates("っんこ")).toContain("xtunko");
+      expect(paths("っんこ")).not.toContain("nnko");
+      expect(paths("っんこ")).toContain("xtunko");
     });
 
     test("後続がなければ促音だけの塊になる", () => {
       expect(sources("あっ")).toEqual(["あ", "っ"]);
-      expect(candidates("あっ", 1)).toEqual(["xtu", "ltu", "xtsu", "ltsu"]);
+      expect(paths("あっ", 1)).toEqual(["xtu", "ltu", "xtsu", "ltsu"]);
     });
   });
 
@@ -102,25 +100,23 @@ describe("romaji", () => {
     test("後続と1塊にまとめ、n 一文字の綴りも受け付ける", () => {
       expect(sources("んか")).toEqual(["んか"]);
       expect(guide("んか")).toBe("nka");
-      expect(candidates("んか")).toEqual(
-        expect.arrayContaining(["nka", "nnka", "xnka", "n'ka", "nca"]),
-      );
+      expect(paths("んか")).toEqual(expect.arrayContaining(["nka", "nnka", "xnka", "n'ka", "nca"]));
     });
 
     test("な行の前では n 一文字を受け付けない", () => {
-      expect(candidates("んに")).not.toContain("nni");
+      expect(paths("んに")).not.toContain("nni");
       expect(guide("んに")).toBe("nnni");
     });
 
     test("母音・や行の前では n 一文字を受け付けない", () => {
-      expect(candidates("んあ")).not.toContain("na");
-      expect(candidates("んや")).not.toContain("nya");
+      expect(paths("んあ")).not.toContain("na");
+      expect(paths("んや")).not.toContain("nya");
       expect(guide("んあ")).toBe("nna");
     });
 
     test("後続がなければ nn を要求する", () => {
       expect(sources("ほん")).toEqual(["ほ", "ん"]);
-      expect(candidates("ほん", 1)).toEqual(["nn", "n'", "xn"]);
+      expect(paths("ほん", 1)).toEqual(["nn", "n'", "xn"]);
     });
 
     test("促音を吸収した塊の前では n 一文字を受け付ける", () => {

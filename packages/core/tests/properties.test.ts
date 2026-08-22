@@ -5,12 +5,12 @@ import type { Chunk, Mode, Phrase } from "../src/index.ts";
 
 const ACCEPTED_KEYS = ["a", "b", "c"] as const;
 
-// WHY NOT: 候補の長さは本来まちまちだが、塊ごとに揃えないと候補どうしが接頭辞になり、
+// WHY NOT: 経路の長さは本来まちまちだが、塊ごとに揃えないと経路どうしが接頭辞になり、
 // Chunk が満たすべき前提を壊した塊で性質を検証してしまう
 const anyChunk = fc.integer({ min: 1, max: 3 }).chain((length) =>
   fc.record({
-    source: fc.string({ minLength: 1, maxLength: 2 }),
-    candidates: fc.uniqueArray(
+    chars: fc.string({ minLength: 1, maxLength: 2 }),
+    paths: fc.uniqueArray(
       fc
         .array(fc.constantFrom(...ACCEPTED_KEYS), { minLength: length, maxLength: length })
         .map((keys) => keys.join("")),
@@ -22,7 +22,7 @@ const anyChunks = fc.array(anyChunk, { minLength: 1, maxLength: 8 });
 
 const phraseOfChunks = (chunks: Chunk[]) => {
   const mode: Mode = () => chunks;
-  return newPhrase(chunks.map((chunk) => chunk.source).join(""), mode);
+  return newPhrase(chunks.map((chunk) => chunk.chars).join(""), mode);
 };
 
 const REJECTED_KEY = "z";
@@ -185,31 +185,31 @@ describe("romaji の性質", () => {
       fc.property(anyText, (text) => {
         expect(
           romaji(text)
-            .map((chunk) => chunk.source)
+            .map((chunk) => chunk.chars)
             .join(""),
         ).toBe(text);
       }),
     );
   });
 
-  test("どの塊も空でない打鍵列を持つ", () => {
+  test("どの塊も空でない経路を持つ", () => {
     fc.assert(
       fc.property(anyText, (text) => {
         for (const chunk of romaji(text)) {
-          expect(chunk.candidates.length).toBeGreaterThan(0);
-          expect(chunk.candidates.every((candidate) => candidate.length > 0)).toBe(true);
+          expect(chunk.paths.length).toBeGreaterThan(0);
+          expect(chunk.paths.every((path) => path.length > 0)).toBe(true);
         }
       }),
     );
   });
 
-  test("同じ塊の候補は、互いに接頭辞にならない", () => {
+  test("同じ塊の経路は、互いに接頭辞にならない", () => {
     fc.assert(
       fc.property(anyText, (text) => {
         for (const chunk of romaji(text)) {
-          for (const candidate of chunk.candidates) {
-            const prefixes = chunk.candidates.filter(
-              (other) => other !== candidate && candidate.startsWith(other),
+          for (const path of chunk.paths) {
+            const prefixes = chunk.paths.filter(
+              (other) => other !== path && path.startsWith(other),
             );
             expect(prefixes).toEqual([]);
           }
@@ -218,12 +218,12 @@ describe("romaji の性質", () => {
     );
   });
 
-  test("合成されない塊では、推奨する候補が最短の綴りになる", () => {
+  test("合成されない塊では、推奨する経路が最短の綴りになる", () => {
     fc.assert(
       fc.property(anySimpleText, (text) => {
         for (const chunk of romaji(text)) {
-          const shortest = Math.min(...chunk.candidates.map((candidate) => candidate.length));
-          expect(chunk.candidates[0]?.length).toBe(shortest);
+          const shortest = Math.min(...chunk.paths.map((path) => path.length));
+          expect(chunk.paths[0]?.length).toBe(shortest);
         }
       }),
     );
@@ -232,8 +232,8 @@ describe("romaji の性質", () => {
   test("促音・撥音を吸収した塊の推奨は、後続の推奨で終わる", () => {
     fc.assert(
       fc.property(anyKana, fc.constantFrom("っ", "ん"), (kana, absorbed) => {
-        const following = romaji(kana)[0]?.candidates[0] ?? "";
-        const composed = romaji(absorbed + kana)[0]?.candidates[0] ?? "";
+        const following = romaji(kana)[0]?.paths[0] ?? "";
+        const composed = romaji(absorbed + kana)[0]?.paths[0] ?? "";
 
         expect(composed.endsWith(following)).toBe(true);
       }),

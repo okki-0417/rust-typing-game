@@ -1,4 +1,4 @@
-import { assertTypable, recommended, survivingCandidates } from "./mode.ts";
+import { accepts, assertTypable, completes, preferred } from "./mode.ts";
 import type { Chunk, Mode } from "./mode.ts";
 import { ascii } from "./modes/ascii.ts";
 
@@ -31,10 +31,9 @@ export function strike(phrase: Phrase, key: string): Struck {
   if (!chunk) return { phrase, correct: false };
 
   const pending = phrase.pending + key;
-  const alive = survivingCandidates(chunk, pending);
-  if (alive.length === 0) return { phrase, correct: false };
+  if (!accepts(chunk, pending)) return { phrase, correct: false };
 
-  const settled = alive.includes(pending);
+  const settled = completes(chunk, pending);
   return {
     phrase: phraseAt({
       source: phrase.source,
@@ -60,13 +59,13 @@ function phraseAt(progress: Progress): Phrase {
 function remainingKeys(chunks: readonly Chunk[], index: number, pending: string): string {
   const chunk = chunks[index];
   if (!chunk) return "";
-  let keys = (survivingCandidates(chunk, pending)[0] ?? "").slice(pending.length);
-  for (let i = index + 1; i < chunks.length; i++) keys += recommended(chunks[i]!);
+  let keys = preferred(chunk, pending).slice(pending.length);
+  for (let i = index + 1; i < chunks.length; i++) keys += preferred(chunks[i]!);
   return keys;
 }
 
 function sourceCursor(chunks: readonly Chunk[], index: number): number {
   let cursor = 0;
-  for (let i = 0; i < index; i++) cursor += chunks[i]!.source.length;
+  for (let i = 0; i < index; i++) cursor += chunks[i]!.chars.length;
   return cursor;
 }

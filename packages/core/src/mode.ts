@@ -1,31 +1,35 @@
 export interface Chunk {
-  readonly source: string;
-  readonly candidates: readonly string[];
+  readonly chars: string;
+  readonly paths: readonly string[];
 }
 
 export type Mode = (source: string) => readonly Chunk[];
 
-export function newChunk(source: string, candidates: readonly string[]): Chunk {
-  return { source, candidates };
+export function newChunk(chars: string, paths: readonly string[]): Chunk {
+  return { chars, paths };
 }
 
-export function survivingCandidates(chunk: Chunk, pending: string): readonly string[] {
-  return chunk.candidates.filter((candidate) => candidate.startsWith(pending));
+export function accepts(chunk: Chunk, pending: string): boolean {
+  return chunk.paths.some((path) => path.startsWith(pending));
 }
 
-export function recommended(chunk: Chunk): string {
-  return chunk.candidates[0] ?? "";
+export function completes(chunk: Chunk, pending: string): boolean {
+  return chunk.paths.includes(pending);
+}
+
+export function preferred(chunk: Chunk, pending = ""): string {
+  return chunk.paths.find((path) => path.startsWith(pending)) ?? "";
 }
 
 const TYPABLE = /^[\x20-\x7e]+$/;
 
 export function assertTypable(chunks: readonly Chunk[]): void {
   chunks.forEach((chunk, i) => {
-    const where = `Chunk[${i}] ${JSON.stringify(chunk.source)}`;
-    if (chunk.candidates.length === 0) throw new TypeError(`${where} has no candidates`);
-    for (const candidate of chunk.candidates) {
-      if (!TYPABLE.test(candidate)) {
-        throw new TypeError(`${where} has an untypable candidate ${JSON.stringify(candidate)}`);
+    const where = `Chunk[${i}] ${JSON.stringify(chunk.chars)}`;
+    if (chunk.paths.length === 0) throw new TypeError(`${where} has no paths`);
+    for (const path of chunk.paths) {
+      if (!TYPABLE.test(path)) {
+        throw new TypeError(`${where} has an untypable path ${JSON.stringify(path)}`);
       }
     }
   });

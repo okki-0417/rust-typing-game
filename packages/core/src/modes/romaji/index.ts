@@ -25,9 +25,9 @@ export const romaji: Mode = (source) => {
     const following = chunks[0];
 
     if (kana === SOKUON && following) {
-      chunks[0] = newChunk(original + following.source, geminate(following.candidates));
+      chunks[0] = newChunk(original + following.chars, geminate(following.paths));
     } else if (kana === HATSUON && following) {
-      chunks[0] = newChunk(original + following.source, nasalize(following.candidates));
+      chunks[0] = newChunk(original + following.chars, nasalize(following.paths));
     } else {
       chunks.unshift(newChunk(original, spell(kana)));
     }
@@ -42,9 +42,9 @@ function spell(text: string): readonly string[] {
     const base = MONOGRAPHS[text[0]!] ?? [];
     const small = MONOGRAPHS[text[1]!] ?? [];
     const stepwise = base.flatMap((head) => small.map((tail) => head + tail));
-    return orderCandidates([...(DIGRAPHS[text] ?? []), ...stepwise]);
+    return orderSpellings([...(DIGRAPHS[text] ?? []), ...stepwise]);
   }
-  return orderCandidates(MONOGRAPHS[text] ?? PUNCTUATION[text] ?? [text]);
+  return orderSpellings(MONOGRAPHS[text] ?? PUNCTUATION[text] ?? [text]);
 }
 
 function geminate(following: readonly string[]): readonly string[] {
@@ -52,7 +52,7 @@ function geminate(following: readonly string[]): readonly string[] {
   const prefixed = SOKUON_SPELLINGS.flatMap((prefix) => following.map((c) => prefix + c));
   const head = following[0]!;
   const recommended = DOUBLABLE.test(head) ? head[0]! + head : SOKUON_SPELLINGS[0] + head;
-  return recommend(recommended, orderCandidates([...doubled, ...prefixed]));
+  return recommend(recommended, orderSpellings([...doubled, ...prefixed]));
 }
 
 function nasalize(following: readonly string[]): readonly string[] {
@@ -60,15 +60,15 @@ function nasalize(following: readonly string[]): readonly string[] {
   const prefixed = HATSUON_SPELLINGS.flatMap((prefix) => following.map((c) => prefix + c));
   const head = following[0]!;
   const recommended = ABSORBS_SINGLE_N.test(head) ? HATSUON_SPELLINGS[0] + head : "n" + head;
-  return recommend(recommended, orderCandidates([...single, ...prefixed]));
+  return recommend(recommended, orderSpellings([...single, ...prefixed]));
 }
 
-function orderCandidates(candidates: readonly string[]): string[] {
-  return [...new Set(candidates)].sort((a, b) => a.length - b.length);
+function orderSpellings(spellings: readonly string[]): string[] {
+  return [...new Set(spellings)].sort((a, b) => a.length - b.length);
 }
 
 // WHY NOT: 本来は最短の綴りをそのまま推奨すべきだが、「っい」の yyi のように
 // 短くても誰も打たない綴りが先頭に来るため、後続の塊の推奨に繋がる綴りを推す
-function recommend(recommended: string, candidates: string[]): string[] {
-  return [recommended, ...candidates.filter((candidate) => candidate !== recommended)];
+function recommend(recommended: string, spellings: string[]): string[] {
+  return [recommended, ...spellings.filter((spelling) => spelling !== recommended)];
 }
