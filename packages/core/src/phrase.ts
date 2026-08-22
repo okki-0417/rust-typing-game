@@ -4,9 +4,9 @@ import type { Mode } from "./interpret.ts";
 
 // WHY NOT: 本来は private フィールドで隠すべきだが、TS はモジュールをまたぐと
 // 非公開にできないため、外から名前を書けない symbol をキーにして進捗を持たせる
-export const PROGRESS = Symbol("progress");
+const PROGRESS = Symbol("progress");
 
-export interface Progress {
+interface Progress {
   readonly chunks: readonly Chunk[];
   readonly index: number;
   readonly inputs: string;
@@ -24,6 +24,32 @@ export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
   return { source, typed: "", [PROGRESS]: { chunks, index: 0, inputs: "" } };
 }
 
+export function typing(phrase: Phrase, key: string): Phrase {
+  const { chunks, index, inputs } = phrase[PROGRESS];
+
+  return newPhraseAt(phrase, key, { chunks, index, inputs: inputs + key });
+}
+
+export function settled(phrase: Phrase, key: string): Phrase {
+  const { chunks, index } = phrase[PROGRESS];
+
+  return newPhraseAt(phrase, key, { chunks, index: index + 1, inputs: "" });
+}
+
+function newPhraseAt(phrase: Phrase, key: string, progress: Progress): Phrase {
+  return { source: phrase.source, typed: phrase.typed + key, [PROGRESS]: progress };
+}
+
+export function pending(phrase: Phrase): readonly Chunk[] {
+  const { chunks, index } = phrase[PROGRESS];
+
+  return chunks.slice(index);
+}
+
+export function inputs(phrase: Phrase): string {
+  return phrase[PROGRESS].inputs;
+}
+
 export function cursor(phrase: Phrase): number {
   const { chunks, index } = phrase[PROGRESS];
 
@@ -33,7 +59,5 @@ export function cursor(phrase: Phrase): number {
 }
 
 export function isDone(phrase: Phrase): boolean {
-  const { chunks, index } = phrase[PROGRESS];
-
-  return index >= chunks.length;
+  return pending(phrase).length === 0;
 }
