@@ -1,6 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
-import { cursor, interpret, isDone, newPhrase, remaining, strike } from "../src/index.ts";
+import { cursor, isDone, newPhrase, remaining, strike } from "../src/index.ts";
+import { interpret } from "../src/phrase/interpret.ts";
 import type { Phrase } from "../src/index.ts";
 
 // WHY NOT: 打てない打鍵なら何でもよいが、経路は必ず印字可能な ASCII なので、

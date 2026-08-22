@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
-import { interpret, isDone, newPhrase, strike } from "../src/index.ts";
+import { isDone, newPhrase, strike } from "../src/index.ts";
+import { interpret } from "../src/phrase/interpret.ts";
 
 const sources = (source: string) => interpret(source, "romaji").map((chunk) => chunk.chars);
 const paths = (source: string, index = 0) => interpret(source, "romaji")[index]?.paths ?? [];

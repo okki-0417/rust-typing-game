@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { interpret } from "../src/index.ts";
+import { interpret } from "../src/phrase/interpret.ts";
 
 describe("ascii", () => {
   test("1文字が1塊になり、その文字自体が唯一の経路になる", () => {
