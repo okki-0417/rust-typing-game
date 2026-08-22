@@ -80,7 +80,7 @@ const anyRatio = fc.double({ min: 0, max: 1, noNaN: true });
 
 const typeKeys = (phrase: Phrase, keys: string) => {
   let current = phrase;
-  for (const key of keys) current = strike(current, key).phrase;
+  for (const key of keys) current = strike({ phrase: current, key }) ?? current;
   return current;
 };
 
@@ -90,12 +90,12 @@ const typeGuide = (start: Phrase) => {
   while (!phrase.isDone) {
     const key = phrase.remaining.at(0);
     if (key === undefined) break;
-    const struck = strike(phrase, key);
-    phrase = struck.phrase;
-    if (!struck.isCorrect) {
+    const struck = strike({ phrase, key });
+    if (!struck) {
       missed = true;
       break;
     }
+    phrase = struck;
   }
   return { phrase, missed };
 };
@@ -126,14 +126,12 @@ describe("文言を打ち進める性質", () => {
     );
   });
 
-  test("受理されない打鍵は文言を進めない", () => {
+  test("受理されない打鍵は何も返さない", () => {
     fc.assert(
       fc.property(anyRomajiPhrase, anyRatio, (start, ratio) => {
         const phrase = typePrefix(start, ratio);
 
-        const struck = strike(phrase, IMPOSSIBLE_KEY);
-        expect(struck.isCorrect).toBe(false);
-        expect(struck.phrase).toBe(phrase);
+        expect(strike({ phrase, key: IMPOSSIBLE_KEY })).toBeNull();
       }),
     );
   });
@@ -144,8 +142,8 @@ describe("文言を打ち進める性質", () => {
         const phrase = typePrefix(start, ratio);
         const before = { ...phrase };
 
-        strike(phrase, phrase.remaining.at(0) ?? IMPOSSIBLE_KEY);
-        strike(phrase, IMPOSSIBLE_KEY);
+        strike({ phrase, key: phrase.remaining.at(0) ?? IMPOSSIBLE_KEY });
+        strike({ phrase, key: IMPOSSIBLE_KEY });
 
         expect({ ...phrase }).toEqual(before);
       }),
@@ -161,7 +159,7 @@ describe("文言を打ち進める性質", () => {
         while (!phrase.isDone) {
           const key = phrase.remaining.at(0);
           if (key === undefined) break;
-          phrase = strike(phrase, key).phrase;
+          phrase = strike({ phrase, key }) ?? phrase;
 
           expect(phrase.cursor).toBeGreaterThanOrEqual(cursor);
           expect(phrase.cursor).toBeLessThanOrEqual(phrase.source.length);

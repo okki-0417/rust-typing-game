@@ -1,7 +1,7 @@
 import type { Chunk } from "./chunk.ts";
 import { interpret } from "./interpret.ts";
 import type { Mode } from "./interpret.ts";
-import { isAccepted, isCompleted, newJudgement, preferred } from "./judgement.ts";
+import { newJudgement, preferred } from "./judgement.ts";
 
 // WHY NOT: 本来は private フィールドで隠すべきだが、TS はモジュールをまたぐと
 // 非公開にできないため、外から名前を書けない symbol をキーにして進捗を持たせる
@@ -24,39 +24,13 @@ export interface Phrase {
   readonly [PROGRESS]: Progress;
 }
 
-export interface Struck {
-  readonly phrase: Phrase;
-  readonly isCorrect: boolean;
-}
-
 export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
   const chunks = interpret(source, mode);
 
-  return phraseAt({ source, chunks, index: 0, inputs: "", typed: "" });
+  return newPhraseAt({ source, chunks, index: 0, inputs: "", typed: "" });
 }
 
-export function strike(phrase: Phrase, key: string): Struck {
-  const progress = phrase[PROGRESS];
-  const chunk = progress.chunks[progress.index];
-  if (!chunk) return { phrase, isCorrect: false };
-
-  const inputs = progress.inputs + key;
-  const judgement = newJudgement(chunk, inputs);
-  if (!isAccepted(judgement)) return { phrase, isCorrect: false };
-
-  const settled = isCompleted(judgement);
-  return {
-    phrase: phraseAt({
-      ...progress,
-      index: settled ? progress.index + 1 : progress.index,
-      inputs: settled ? "" : inputs,
-      typed: progress.typed + key,
-    }),
-    isCorrect: true,
-  };
-}
-
-function phraseAt(progress: Progress): Phrase {
+export function newPhraseAt(progress: Progress): Phrase {
   const { source, chunks, index, inputs, typed } = progress;
 
   return {
