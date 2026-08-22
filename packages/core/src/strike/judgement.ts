@@ -1,4 +1,4 @@
-import type { Chunk } from "../chunk.ts";
+import type { Chunk } from "../phrase.ts";
 
 export interface Judgement {
   readonly chunk: Chunk;

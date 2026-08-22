@@ -1,5 +1,5 @@
-import { newChunk } from "../../../chunk.ts";
-import type { Chunk } from "../../../chunk.ts";
+import { newChunk } from "../../chunk.ts";
+import type { Chunk } from "../../chunk.ts";
 import {
   ABSORBS_SINGLE_N,
   DIGRAPHS,

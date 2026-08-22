@@ -1,4 +1,4 @@
-import type { Chunk } from "../chunk.ts";
+import type { Chunk } from "./chunk.ts";
 import { ascii } from "./interpret/ascii.ts";
 import { romaji } from "./interpret/romaji/index.ts";
 

@@ -1,8 +1,8 @@
-import type { Chunk } from "./chunk.ts";
+import type { Chunk } from "./phrase/chunk.ts";
 import { interpret } from "./phrase/interpret.ts";
 import type { Mode } from "./phrase/interpret.ts";
 
-export type { Mode };
+export type { Chunk, Mode };
 
 // WHY NOT: 本来は private フィールドで隠すべきだが、TS はモジュールをまたぐと
 // 非公開にできないため、外から名前を書けない symbol をキーにして進捗を持たせる
