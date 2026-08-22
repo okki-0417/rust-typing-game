@@ -1,5 +1,7 @@
-export { newPhrase, strike } from "./phrase.ts";
-export type { Phrase, Struck } from "./phrase.ts";
-export { interpret } from "./mode.ts";
-export type { Mode } from "./mode.ts";
+export { newPhrase } from "./phrase.ts";
+export type { Phrase } from "./phrase.ts";
+export { strike } from "./strike.ts";
+export type { Strike, Struck } from "./strike.ts";
+export { interpret } from "./interpret.ts";
+export type { Mode } from "./interpret.ts";
 export type { Chunk } from "./chunk.ts";

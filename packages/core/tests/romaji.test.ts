@@ -148,7 +148,7 @@ const expectGuides = (expected: Record<string, string>) => {
 const accepts = (source: string, keys: string) => {
   let phrase = newPhrase(source, "romaji");
   for (const key of keys) {
-    const struck = strike(phrase, key);
+    const struck = strike({ phrase, key });
     if (!struck.isCorrect) return false;
     phrase = struck.phrase;
   }

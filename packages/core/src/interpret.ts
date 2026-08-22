@@ -1,6 +1,6 @@
 import type { Chunk } from "./chunk.ts";
-import { ascii } from "./modes/ascii.ts";
-import { romaji } from "./modes/romaji/index.ts";
+import { ascii } from "./interpret/ascii.ts";
+import { romaji } from "./interpret/romaji/index.ts";
 
 type Interpret = (source: string) => readonly Chunk[];
 
