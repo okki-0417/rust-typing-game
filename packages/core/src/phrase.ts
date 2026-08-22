@@ -7,7 +7,7 @@ export interface Phrase {
   readonly typed: string;
   readonly remaining: string;
   readonly cursor: number;
-  readonly done: boolean;
+  readonly isDone: boolean;
   readonly chunks: readonly Chunk[];
   readonly index: number;
   readonly inputs: string;
@@ -15,7 +15,7 @@ export interface Phrase {
 
 export interface Struck {
   readonly phrase: Phrase;
-  readonly correct: boolean;
+  readonly isCorrect: boolean;
 }
 
 type Progress = Pick<Phrase, "source" | "chunks" | "index" | "inputs" | "typed">;
@@ -28,10 +28,10 @@ export function newPhrase(source: string, mode: Mode = ascii): Phrase {
 
 export function strike(phrase: Phrase, key: string): Struck {
   const chunk = phrase.chunks[phrase.index];
-  if (!chunk) return { phrase, correct: false };
+  if (!chunk) return { phrase, isCorrect: false };
 
   const inputs = phrase.inputs + key;
-  if (!isAccepted(chunk, inputs)) return { phrase, correct: false };
+  if (!isAccepted(chunk, inputs)) return { phrase, isCorrect: false };
 
   const settled = isCompleted(chunk, inputs);
   return {
@@ -42,7 +42,7 @@ export function strike(phrase: Phrase, key: string): Struck {
       inputs: settled ? "" : inputs,
       typed: phrase.typed + key,
     }),
-    correct: true,
+    isCorrect: true,
   };
 }
 
@@ -52,7 +52,7 @@ function phraseAt(progress: Progress): Phrase {
     ...progress,
     remaining: remainingKeys(chunks, index, inputs),
     cursor: sourceCursor(chunks, index),
-    done: index >= chunks.length,
+    isDone: index >= chunks.length,
   };
 }
 

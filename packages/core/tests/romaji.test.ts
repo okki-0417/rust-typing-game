@@ -149,10 +149,10 @@ const accepts = (source: string, keys: string) => {
   let phrase = newPhrase(source, romaji);
   for (const key of keys) {
     const struck = strike(phrase, key);
-    if (!struck.correct) return false;
+    if (!struck.isCorrect) return false;
     phrase = struck.phrase;
   }
-  return phrase.done;
+  return phrase.isDone;
 };
 
 describe("romaji のパターン", () => {

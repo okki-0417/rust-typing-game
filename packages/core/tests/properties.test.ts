@@ -36,12 +36,12 @@ const typeKeys = (phrase: Phrase, keys: string) => {
 const typeGuide = (start: Phrase) => {
   let phrase = start;
   let missed = false;
-  while (!phrase.done) {
+  while (!phrase.isDone) {
     const key = phrase.remaining.at(0);
     if (key === undefined) break;
     const struck = strike(phrase, key);
     phrase = struck.phrase;
-    if (!struck.correct) {
+    if (!struck.isCorrect) {
       missed = true;
       break;
     }
@@ -59,7 +59,7 @@ describe("文言を打ち進める性質", () => {
         const { phrase, missed } = typeGuide(phraseOfChunks(chunks));
 
         expect(missed).toBe(false);
-        expect(phrase.done).toBe(true);
+        expect(phrase.isDone).toBe(true);
         expect(phrase.cursor).toBe(phrase.source.length);
       }),
     );
@@ -70,7 +70,7 @@ describe("文言を打ち進める性質", () => {
       fc.property(anyChunks, fc.double({ min: 0, max: 1, noNaN: true }), (chunks, ratio) => {
         const started = typePrefix(phraseOfChunks(chunks), ratio);
 
-        expect(typeKeys(started, started.remaining).done).toBe(true);
+        expect(typeKeys(started, started.remaining).isDone).toBe(true);
       }),
     );
   });
@@ -81,7 +81,7 @@ describe("文言を打ち進める性質", () => {
         const phrase = typePrefix(phraseOfChunks(chunks), ratio);
 
         const struck = strike(phrase, REJECTED_KEY);
-        expect(struck.correct).toBe(false);
+        expect(struck.isCorrect).toBe(false);
         expect(struck.phrase).toBe(phrase);
       }),
     );
@@ -248,7 +248,7 @@ describe("ローマ字で打ち切れること", () => {
         const { phrase, missed } = typeGuide(newPhrase(text, romaji));
 
         expect(missed).toBe(false);
-        expect(phrase.done).toBe(true);
+        expect(phrase.isDone).toBe(true);
         expect(phrase.cursor).toBe(text.length);
       }),
     );
