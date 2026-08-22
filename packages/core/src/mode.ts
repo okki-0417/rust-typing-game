@@ -9,16 +9,16 @@ export function newChunk(chars: string, paths: readonly string[]): Chunk {
   return { chars, paths };
 }
 
-export function accepts(chunk: Chunk, pending: string): boolean {
-  return chunk.paths.some((path) => path.startsWith(pending));
+export function isAccepted(chunk: Chunk, inputs: string): boolean {
+  return chunk.paths.some((path) => path.startsWith(inputs));
 }
 
-export function completes(chunk: Chunk, pending: string): boolean {
-  return chunk.paths.includes(pending);
+export function isCompleted(chunk: Chunk, inputs: string): boolean {
+  return chunk.paths.includes(inputs);
 }
 
-export function preferred(chunk: Chunk, pending = ""): string {
-  return chunk.paths.find((path) => path.startsWith(pending)) ?? "";
+export function preferred(chunk: Chunk, inputs = ""): string {
+  return chunk.paths.find((path) => path.startsWith(inputs)) ?? "";
 }
 
 const TYPABLE = /^[\x20-\x7e]+$/;
