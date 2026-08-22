@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { newPhrase, strike } from "../src/index.ts";
+import { cursor, isDone, newPhrase, remaining, strike } from "../src/index.ts";
 import type { Phrase } from "../src/index.ts";
 
 const typeKey = (phrase: Phrase, key: string): Phrase => {
@@ -19,20 +19,20 @@ describe("strike", () => {
     const start = newPhrase("ab");
 
     const a = typeKey(start, "a");
-    expect(a.isDone).toBe(false);
+    expect(isDone(a)).toBe(false);
 
     const b = typeKey(a, "b");
-    expect(b.isDone).toBe(true);
+    expect(isDone(b)).toBe(true);
     expect(b.typed).toBe("ab");
-    expect(b.remaining).toBe("");
-    expect(b.cursor).toBe(2);
+    expect(remaining(b)).toBe("");
+    expect(cursor(b)).toBe(2);
   });
 
   test("塊を打ち切っても、後続があるうちは isDone にならない", () => {
     const a = typeKey(newPhrase("あい", "romaji"), "a");
 
-    expect(a.isDone).toBe(false);
-    expect(a.cursor).toBe(1);
+    expect(isDone(a)).toBe(false);
+    expect(cursor(a)).toBe(1);
   });
 
   test("受理されない打鍵は何も返さない", () => {
@@ -48,19 +48,19 @@ describe("strike", () => {
     strike({ phrase: start, key: "s" });
 
     expect(start.typed).toBe("");
-    expect(start.remaining).toBe("si");
-    expect(start.cursor).toBe(0);
+    expect(remaining(start)).toBe("si");
+    expect(cursor(start)).toBe(0);
   });
 
   test("経路が複数あるとき、remaining は打った経路に追従する", () => {
     const start = newPhrase("し", "romaji");
-    expect(start.remaining).toBe("si");
+    expect(remaining(start)).toBe("si");
 
     const sh = typeKeys(start, "sh");
-    expect(sh.remaining).toBe("i");
+    expect(remaining(sh)).toBe("i");
 
     const shi = typeKey(sh, "i");
-    expect(shi.isDone).toBe(true);
+    expect(isDone(shi)).toBe(true);
     expect(shi.typed).toBe("shi");
   });
 
@@ -68,24 +68,24 @@ describe("strike", () => {
     const s = typeKey(newPhrase("し", "romaji"), "s");
 
     expect(strike({ phrase: s, key: "a" })).toBeNull();
-    expect(s.remaining).toBe("i");
+    expect(remaining(s)).toBe("i");
   });
 
   test("remaining は後続の塊の推奨経路まで繋げて返す", () => {
     const start = newPhrase("っこ！", "romaji");
 
-    expect(start.remaining).toBe("kko!");
-    expect(typeKey(start, "x").remaining).toBe("tuko!");
+    expect(remaining(start)).toBe("kko!");
+    expect(remaining(typeKey(start, "x"))).toBe("tuko!");
   });
 
   test("cursor は塊が対応する原文の文字数ぶん進む", () => {
     const start = newPhrase("っこ！", "romaji");
-    expect(start.cursor).toBe(0);
-    expect(typeKey(start, "k").cursor).toBe(0);
+    expect(cursor(start)).toBe(0);
+    expect(cursor(typeKey(start, "k"))).toBe(0);
 
     const kko = typeKeys(start, "kko");
-    expect(kko.cursor).toBe(2);
-    expect(kko.source.slice(0, kko.cursor)).toBe("っこ");
+    expect(cursor(kko)).toBe(2);
+    expect(kko.source.slice(0, cursor(kko))).toBe("っこ");
   });
 
   test("打ち切ったあとの打鍵は受理しない", () => {
@@ -93,6 +93,6 @@ describe("strike", () => {
 
     expect(strike({ phrase: cleared, key: "a" })).toBeNull();
     expect(cleared.typed).toBe("a");
-    expect(cleared.cursor).toBe(1);
+    expect(cursor(cleared)).toBe(1);
   });
 });

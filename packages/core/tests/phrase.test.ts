@@ -1,21 +1,21 @@
 import { describe, expect, test } from "vite-plus/test";
-import { newPhrase, strike } from "../src/index.ts";
+import { cursor, isDone, newPhrase, remaining, strike } from "../src/index.ts";
 
 describe("newPhrase", () => {
   test("既定の入力方式は原文をそのまま打たせる", () => {
     const phrase = newPhrase("a1!");
 
-    expect(phrase.remaining).toBe("a1!");
-    expect(phrase.cursor).toBe(0);
-    expect(phrase.isDone).toBe(false);
+    expect(remaining(phrase)).toBe("a1!");
+    expect(cursor(phrase)).toBe(0);
+    expect(isDone(phrase)).toBe(false);
   });
 
   test("空の原文は最初から打ち切った状態になる", () => {
     const phrase = newPhrase("");
 
-    expect(phrase.isDone).toBe(true);
-    expect(phrase.remaining).toBe("");
-    expect(phrase.cursor).toBe(0);
+    expect(isDone(phrase)).toBe(true);
+    expect(remaining(phrase)).toBe("");
+    expect(cursor(phrase)).toBe(0);
     expect(strike({ phrase, key: "a" })).toBeNull();
   });
 

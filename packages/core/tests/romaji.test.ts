@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { interpret, newPhrase, strike } from "../src/index.ts";
+import { interpret, isDone, newPhrase, strike } from "../src/index.ts";
 
 const sources = (source: string) => interpret(source, "romaji").map((chunk) => chunk.chars);
 const paths = (source: string, index = 0) => interpret(source, "romaji")[index]?.paths ?? [];
@@ -152,7 +152,7 @@ const accepts = (source: string, keys: string) => {
     if (!struck) return false;
     phrase = struck;
   }
-  return phrase.isDone;
+  return isDone(phrase);
 };
 
 describe("romaji のパターン", () => {

@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vite-plus/test";
-import { interpret, newPhrase, strike } from "../src/index.ts";
+import { cursor, interpret, isDone, newPhrase, remaining, strike } from "../src/index.ts";
 import type { Phrase } from "../src/index.ts";
 
 // WHY NOT: 打てない打鍵なら何でもよいが、経路は必ず印字可能な ASCII なので、
@@ -87,8 +87,8 @@ const typeKeys = (phrase: Phrase, keys: string) => {
 const typeGuide = (start: Phrase) => {
   let phrase = start;
   let missed = false;
-  while (!phrase.isDone) {
-    const key = phrase.remaining.at(0);
+  while (!isDone(phrase)) {
+    const key = remaining(phrase).at(0);
     if (key === undefined) break;
     const struck = strike({ phrase, key });
     if (!struck) {
@@ -101,7 +101,7 @@ const typeGuide = (start: Phrase) => {
 };
 
 const typePrefix = (phrase: Phrase, ratio: number) =>
-  typeKeys(phrase, phrase.remaining.slice(0, Math.floor(phrase.remaining.length * ratio)));
+  typeKeys(phrase, remaining(phrase).slice(0, Math.floor(remaining(phrase).length * ratio)));
 
 describe("文言を打ち進める性質", () => {
   test("推奨された打鍵をたどると必ず打ち切れる", () => {
@@ -110,8 +110,8 @@ describe("文言を打ち進める性質", () => {
         const { phrase, missed } = typeGuide(start);
 
         expect(missed).toBe(false);
-        expect(phrase.isDone).toBe(true);
-        expect(phrase.cursor).toBe(phrase.source.length);
+        expect(isDone(phrase)).toBe(true);
+        expect(cursor(phrase)).toBe(phrase.source.length);
       }),
     );
   });
@@ -121,7 +121,7 @@ describe("文言を打ち進める性質", () => {
       fc.property(anyRomajiPhrase, anyRatio, (start, ratio) => {
         const started = typePrefix(start, ratio);
 
-        expect(typeKeys(started, started.remaining).isDone).toBe(true);
+        expect(isDone(typeKeys(started, remaining(started)))).toBe(true);
       }),
     );
   });
@@ -142,7 +142,7 @@ describe("文言を打ち進める性質", () => {
         const phrase = typePrefix(start, ratio);
         const before = { ...phrase };
 
-        strike({ phrase, key: phrase.remaining.at(0) ?? IMPOSSIBLE_KEY });
+        strike({ phrase, key: remaining(phrase).at(0) ?? IMPOSSIBLE_KEY });
         strike({ phrase, key: IMPOSSIBLE_KEY });
 
         expect({ ...phrase }).toEqual(before);
@@ -154,19 +154,19 @@ describe("文言を打ち進める性質", () => {
     fc.assert(
       fc.property(anyRomajiPhrase, (start) => {
         let phrase = start;
-        let cursor = 0;
+        let previous = 0;
 
-        while (!phrase.isDone) {
-          const key = phrase.remaining.at(0);
+        while (!isDone(phrase)) {
+          const key = remaining(phrase).at(0);
           if (key === undefined) break;
           phrase = strike({ phrase, key }) ?? phrase;
 
-          expect(phrase.cursor).toBeGreaterThanOrEqual(cursor);
-          expect(phrase.cursor).toBeLessThanOrEqual(phrase.source.length);
-          cursor = phrase.cursor;
+          expect(cursor(phrase)).toBeGreaterThanOrEqual(previous);
+          expect(cursor(phrase)).toBeLessThanOrEqual(phrase.source.length);
+          previous = cursor(phrase);
         }
 
-        expect(phrase.cursor).toBe(phrase.source.length);
+        expect(cursor(phrase)).toBe(phrase.source.length);
       }),
     );
   });

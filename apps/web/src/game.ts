@@ -1,4 +1,4 @@
-import { newPhrase, strike } from "@typing-game/core";
+import { cursor, isDone, newPhrase, remaining, strike } from "@typing-game/core";
 import type { Challenge } from "./challenges.ts";
 import { createDeck } from "./deck.ts";
 
@@ -87,7 +87,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
 
       phrase = struck;
       hits++;
-      if (phrase.isDone) {
+      if (isDone(phrase)) {
         cleared++;
         next();
       }
@@ -102,14 +102,15 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
       const elapsed = elapsedMs(now);
       const strokes = hits + misses;
       const minutes = elapsed / 60_000;
+      const at = cursor(phrase);
 
       return {
         phase,
         challenge,
-        typedReading: phrase.source.slice(0, phrase.cursor),
-        remainingReading: phrase.source.slice(phrase.cursor),
+        typedReading: phrase.source.slice(0, at),
+        remainingReading: phrase.source.slice(at),
         typed: phrase.typed,
-        remaining: phrase.remaining,
+        remaining: remaining(phrase),
         score: {
           hits,
           misses,

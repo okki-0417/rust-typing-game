@@ -1,5 +1,5 @@
 import { isAccepted, isCompleted, newJudgement } from "./judgement.ts";
-import { newPhraseAt, PROGRESS } from "./phrase.ts";
+import { PROGRESS } from "./phrase.ts";
 import type { Phrase } from "./phrase.ts";
 
 export interface Strike {
@@ -10,19 +10,21 @@ export interface Strike {
 export function strike(strike: Strike): Phrase | null {
   const { phrase, key } = strike;
 
-  const progress = phrase[PROGRESS];
-  const chunk = progress.chunks[progress.index];
+  const { chunks, index, inputs } = phrase[PROGRESS];
+  const chunk = chunks[index];
   if (!chunk) return null;
 
-  const inputs = progress.inputs + key;
-  const judgement = newJudgement(chunk, inputs);
+  const judgement = newJudgement(chunk, inputs + key);
   if (!isAccepted(judgement)) return null;
 
   const settled = isCompleted(judgement);
-  return newPhraseAt({
-    ...progress,
-    index: settled ? progress.index + 1 : progress.index,
-    inputs: settled ? "" : inputs,
-    typed: progress.typed + key,
-  });
+  return {
+    source: phrase.source,
+    typed: phrase.typed + key,
+    [PROGRESS]: {
+      chunks,
+      index: settled ? index + 1 : index,
+      inputs: settled ? "" : inputs + key,
+    },
+  };
 }

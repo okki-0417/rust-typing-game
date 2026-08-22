@@ -8,42 +8,25 @@ import { newJudgement, preferred } from "./judgement.ts";
 export const PROGRESS = Symbol("progress");
 
 export interface Progress {
-  readonly source: string;
   readonly chunks: readonly Chunk[];
   readonly index: number;
   readonly inputs: string;
-  readonly typed: string;
 }
 
 export interface Phrase {
   readonly source: string;
   readonly typed: string;
-  readonly remaining: string;
-  readonly cursor: number;
-  readonly isDone: boolean;
   readonly [PROGRESS]: Progress;
 }
 
 export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
   const chunks = interpret(source, mode);
 
-  return newPhraseAt({ source, chunks, index: 0, inputs: "", typed: "" });
+  return { source, typed: "", [PROGRESS]: { chunks, index: 0, inputs: "" } };
 }
 
-export function newPhraseAt(progress: Progress): Phrase {
-  const { source, chunks, index, inputs, typed } = progress;
-
-  return {
-    source,
-    typed,
-    remaining: remainingKeys(chunks, index, inputs),
-    cursor: sourceCursor(chunks, index),
-    isDone: index >= chunks.length,
-    [PROGRESS]: progress,
-  };
-}
-
-function remainingKeys(chunks: readonly Chunk[], index: number, inputs: string): string {
+export function remaining(phrase: Phrase): string {
+  const { chunks, index, inputs } = phrase[PROGRESS];
   const chunk = chunks[index];
   if (!chunk) return "";
 
@@ -52,8 +35,16 @@ function remainingKeys(chunks: readonly Chunk[], index: number, inputs: string):
   return keys;
 }
 
-function sourceCursor(chunks: readonly Chunk[], index: number): number {
-  let cursor = 0;
-  for (let i = 0; i < index; i++) cursor += chunks[i]!.chars.length;
-  return cursor;
+export function cursor(phrase: Phrase): number {
+  const { chunks, index } = phrase[PROGRESS];
+
+  let chars = 0;
+  for (let i = 0; i < index; i++) chars += chunks[i]!.chars.length;
+  return chars;
+}
+
+export function isDone(phrase: Phrase): boolean {
+  const { chunks, index } = phrase[PROGRESS];
+
+  return index >= chunks.length;
 }
