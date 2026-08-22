@@ -1,15 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
 import { newPhrase, strike } from "../src/index.ts";
-import type { Chunk, Mode } from "../src/index.ts";
-
-const fixed =
-  (...chunks: Chunk[]): Mode =>
-  () =>
-    chunks;
-
-const sourceOf = (chunks: Chunk[]) => chunks.map((chunk) => chunk.chars).join("");
-
-const phraseOfChunks = (...chunks: Chunk[]) => newPhrase(sourceOf(chunks), fixed(...chunks));
 
 describe("newPhrase", () => {
   test("既定の入力方式は原文をそのまま打たせる", () => {
@@ -29,20 +19,15 @@ describe("newPhrase", () => {
     expect(strike(phrase, "a").isCorrect).toBe(false);
   });
 
-  test("キーボードで打てない経路を持つ塊は受け付けない", () => {
-    expect(() => newPhrase("級", fixed({ chars: "級", paths: ["級"] }))).toThrow(TypeError);
-    expect(() => newPhrase("あ", fixed({ chars: "あ", paths: ["\n"] }))).toThrow(TypeError);
-  });
-
-  test("経路を持たない塊を返す入力方式は受け付けない", () => {
-    expect(() => newPhrase("あ", fixed({ chars: "あ", paths: [] }))).toThrow(TypeError);
-    expect(() => newPhrase("あ", fixed({ chars: "あ", paths: [""] }))).toThrow(TypeError);
+  test("キーボードで打てない文字を含む原文は受け付けない", () => {
+    expect(() => newPhrase("級", "romaji")).toThrow(TypeError);
+    expect(() => newPhrase("🍣")).toThrow(TypeError);
   });
 });
 
 describe("strike", () => {
   test("受理した打鍵は isCorrect で、原文を打ち切ると isDone になる", () => {
-    const start = phraseOfChunks({ chars: "ab", paths: ["ab"] });
+    const start = newPhrase("ab");
 
     const a = strike(start, "a");
     expect(a.isCorrect).toBe(true);
@@ -57,7 +42,7 @@ describe("strike", () => {
   });
 
   test("塊を打ち切っても、後続があるうちは isDone にならない", () => {
-    const start = phraseOfChunks({ chars: "あ", paths: ["a"] }, { chars: "い", paths: ["i"] });
+    const start = newPhrase("あい", "romaji");
 
     const a = strike(start, "a");
     expect(a.isCorrect).toBe(true);
@@ -66,56 +51,53 @@ describe("strike", () => {
   });
 
   test("受理されない打鍵は文言を進めず、同じ文言をそのまま返す", () => {
-    const typed = strike(phraseOfChunks({ chars: "ab", paths: ["ab"] }), "a").phrase;
+    const typed = strike(newPhrase("し", "romaji"), "s").phrase;
 
     const missed = strike(typed, "z");
     expect(missed.isCorrect).toBe(false);
     expect(missed.phrase).toBe(typed);
 
-    expect(strike(typed, "b").isCorrect).toBe(true);
+    expect(strike(typed, "i").isCorrect).toBe(true);
   });
 
   test("打鍵は受け取った文言を書き換えない", () => {
-    const start = phraseOfChunks({ chars: "し", paths: ["shi", "si"] });
+    const start = newPhrase("し", "romaji");
 
     strike(start, "s");
 
     expect(start.typed).toBe("");
-    expect(start.remaining).toBe("shi");
+    expect(start.remaining).toBe("si");
     expect(start.cursor).toBe(0);
   });
 
   test("経路が複数あるとき、remaining は打った経路に追従する", () => {
-    const start = phraseOfChunks({ chars: "し", paths: ["shi", "si"] });
-    expect(start.remaining).toBe("shi");
+    const start = newPhrase("し", "romaji");
+    expect(start.remaining).toBe("si");
 
-    const s = strike(start, "s").phrase;
-    expect(s.remaining).toBe("hi");
+    const sh = strike(strike(start, "s").phrase, "h").phrase;
+    expect(sh.remaining).toBe("i");
 
-    const si = strike(s, "i");
-    expect(si.phrase.isDone).toBe(true);
-    expect(si.phrase.typed).toBe("si");
+    const shi = strike(sh, "i");
+    expect(shi.phrase.isDone).toBe(true);
+    expect(shi.phrase.typed).toBe("shi");
   });
 
   test("経路から外れる打鍵は、その塊の途中でも受理しない", () => {
-    const s = strike(phraseOfChunks({ chars: "し", paths: ["shi", "si"] }), "s").phrase;
+    const s = strike(newPhrase("し", "romaji"), "s").phrase;
 
     expect(strike(s, "a").isCorrect).toBe(false);
-    expect(s.remaining).toBe("hi");
+    expect(s.remaining).toBe("i");
   });
 
   test("remaining は後続の塊の推奨経路まで繋げて返す", () => {
-    const start = phraseOfChunks(
-      { chars: "っこ", paths: ["kko", "xtuko"] },
-      { chars: "！", paths: ["!"] },
-    );
+    const start = newPhrase("っこ！", "romaji");
 
     expect(start.remaining).toBe("kko!");
     expect(strike(start, "x").phrase.remaining).toBe("tuko!");
   });
 
   test("cursor は塊が対応する原文の文字数ぶん進む", () => {
-    const start = phraseOfChunks({ chars: "っこ", paths: ["kko"] }, { chars: "！", paths: ["!"] });
+    const start = newPhrase("っこ！", "romaji");
     expect(start.cursor).toBe(0);
 
     const k = strike(start, "k").phrase;
@@ -127,7 +109,7 @@ describe("strike", () => {
   });
 
   test("打ち切ったあとの打鍵は受理しない", () => {
-    const cleared = strike(phraseOfChunks({ chars: "あ", paths: ["a"] }), "a").phrase;
+    const cleared = strike(newPhrase("あ", "romaji"), "a").phrase;
 
     const after = strike(cleared, "a");
     expect(after.isCorrect).toBe(false);

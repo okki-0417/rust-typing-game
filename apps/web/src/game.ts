@@ -1,4 +1,4 @@
-import { newPhrase, romaji, strike } from "@typing-game/core";
+import { newPhrase, strike } from "@typing-game/core";
 import type { Challenge } from "./challenges.ts";
 import { createDeck } from "./deck.ts";
 
@@ -44,7 +44,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
   let phase: Phase = "ready";
   let startedAt = 0;
   let challenge = deal();
-  let phrase = newPhrase(challenge.reading, romaji);
+  let phrase = newPhrase(challenge.reading, "romaji");
   let hits = 0;
   let misses = 0;
   let cleared = 0;
@@ -57,7 +57,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
 
   const next = () => {
     challenge = deal();
-    phrase = newPhrase(challenge.reading, romaji);
+    phrase = newPhrase(challenge.reading, "romaji");
   };
 
   const game: Game = {

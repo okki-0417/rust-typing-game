@@ -1,6 +1,5 @@
 import { newChunk } from "../../chunk.ts";
 import type { Chunk } from "../../chunk.ts";
-import type { Mode } from "../../mode.ts";
 import {
   ABSORBS_SINGLE_N,
   DIGRAPHS,
@@ -15,7 +14,7 @@ import {
 const SOKUON = "っ";
 const HATSUON = "ん";
 
-export const romaji: Mode = (source) => {
+export const romaji = (source: string): readonly Chunk[] => {
   const reading = normalize(source);
   const chunks: Chunk[] = [];
 

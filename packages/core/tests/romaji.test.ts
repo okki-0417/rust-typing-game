@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vite-plus/test";
-import { newPhrase, romaji, strike } from "../src/index.ts";
+import { interpret, newPhrase, strike } from "../src/index.ts";
 
-const sources = (source: string) => romaji(source).map((chunk) => chunk.chars);
-const paths = (source: string, index = 0) => romaji(source)[index]?.paths ?? [];
+const sources = (source: string) => interpret(source, "romaji").map((chunk) => chunk.chars);
+const paths = (source: string, index = 0) => interpret(source, "romaji")[index]?.paths ?? [];
 const guide = (source: string) =>
-  romaji(source)
+  interpret(source, "romaji")
     .map((chunk) => chunk.paths[0])
     .join("");
 
@@ -23,7 +23,7 @@ describe("romaji", () => {
     });
 
     test("表にない文字はその文字自体を打つ塊になる", () => {
-      expect(romaji("ab1")).toEqual([
+      expect(interpret("ab1", "romaji")).toEqual([
         { chars: "a", paths: ["a"] },
         { chars: "b", paths: ["b"] },
         { chars: "1", paths: ["1"] },
@@ -39,8 +39,8 @@ describe("romaji", () => {
       expect(guide("Ａｂ！")).toBe("Ab!");
     });
 
-    test("綴れない文字は経路にならない", () => {
-      expect(romaji("級")).toEqual([{ chars: "級", paths: ["級"] }]);
+    test("綴れない文字は打てないので受け付けない", () => {
+      expect(() => interpret("級", "romaji")).toThrow(TypeError);
     });
 
     test("カタカナはひらがなと同じ綴りになるが、原文の見た目は保つ", () => {
@@ -146,7 +146,7 @@ const expectGuides = (expected: Record<string, string>) => {
 };
 
 const accepts = (source: string, keys: string) => {
-  let phrase = newPhrase(source, romaji);
+  let phrase = newPhrase(source, "romaji");
   for (const key of keys) {
     const struck = strike(phrase, key);
     if (!struck.isCorrect) return false;

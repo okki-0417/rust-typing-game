@@ -1,7 +1,7 @@
-import { assertTypable, isAccepted, isCompleted, preferred } from "./chunk.ts";
+import { isAccepted, isCompleted, preferred } from "./chunk.ts";
 import type { Chunk } from "./chunk.ts";
+import { interpret } from "./mode.ts";
 import type { Mode } from "./mode.ts";
-import { ascii } from "./modes/ascii.ts";
 
 export interface Phrase {
   readonly source: string;
@@ -21,9 +21,8 @@ export interface Struck {
 
 type Progress = Pick<Phrase, "source" | "chunks" | "index" | "inputs" | "typed">;
 
-export function newPhrase(source: string, mode: Mode = ascii): Phrase {
-  const chunks = mode(source);
-  assertTypable(chunks);
+export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
+  const chunks = interpret(source, mode);
   return phraseAt({ source, chunks, index: 0, inputs: "", typed: "" });
 }
 

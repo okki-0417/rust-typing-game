@@ -18,17 +18,3 @@ export function isCompleted(chunk: Chunk, inputs: string): boolean {
 export function preferred(chunk: Chunk, inputs = ""): string {
   return chunk.paths.find((path) => path.startsWith(inputs)) ?? "";
 }
-
-const TYPABLE = /^[\x20-\x7e]+$/;
-
-export function assertTypable(chunks: readonly Chunk[]): void {
-  chunks.forEach((chunk, i) => {
-    const where = `Chunk[${i}] ${JSON.stringify(chunk.chars)}`;
-    if (chunk.paths.length === 0) throw new TypeError(`${where} has no paths`);
-    for (const path of chunk.paths) {
-      if (!TYPABLE.test(path)) {
-        throw new TypeError(`${where} has an untypable path ${JSON.stringify(path)}`);
-      }
-    }
-  });
-}
