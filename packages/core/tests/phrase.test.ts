@@ -16,7 +16,7 @@ describe("newPhrase", () => {
     expect(phrase.isDone).toBe(true);
     expect(phrase.remaining).toBe("");
     expect(phrase.cursor).toBe(0);
-    expect(strike({ phrase, key: "a" }).isCorrect).toBe(false);
+    expect(strike(phrase, "a").isCorrect).toBe(false);
   });
 
   test("キーボードで打てない文字を含む原文は受け付けない", () => {
@@ -29,11 +29,11 @@ describe("strike", () => {
   test("受理した打鍵は isCorrect で、原文を打ち切ると isDone になる", () => {
     const start = newPhrase("ab");
 
-    const a = strike({ phrase: start, key: "a" });
+    const a = strike(start, "a");
     expect(a.isCorrect).toBe(true);
     expect(a.phrase.isDone).toBe(false);
 
-    const b = strike({ phrase: a.phrase, key: "b" });
+    const b = strike(a.phrase, "b");
     expect(b.isCorrect).toBe(true);
     expect(b.phrase.isDone).toBe(true);
     expect(b.phrase.typed).toBe("ab");
@@ -44,26 +44,26 @@ describe("strike", () => {
   test("塊を打ち切っても、後続があるうちは isDone にならない", () => {
     const start = newPhrase("あい", "romaji");
 
-    const a = strike({ phrase: start, key: "a" });
+    const a = strike(start, "a");
     expect(a.isCorrect).toBe(true);
     expect(a.phrase.isDone).toBe(false);
     expect(a.phrase.cursor).toBe(1);
   });
 
   test("受理されない打鍵は文言を進めず、同じ文言をそのまま返す", () => {
-    const typed = strike({ phrase: newPhrase("し", "romaji"), key: "s" }).phrase;
+    const typed = strike(newPhrase("し", "romaji"), "s").phrase;
 
-    const missed = strike({ phrase: typed, key: "z" });
+    const missed = strike(typed, "z");
     expect(missed.isCorrect).toBe(false);
     expect(missed.phrase).toBe(typed);
 
-    expect(strike({ phrase: typed, key: "i" }).isCorrect).toBe(true);
+    expect(strike(typed, "i").isCorrect).toBe(true);
   });
 
   test("打鍵は受け取った文言を書き換えない", () => {
     const start = newPhrase("し", "romaji");
 
-    strike({ phrase: start, key: "s" });
+    strike(start, "s");
 
     expect(start.typed).toBe("");
     expect(start.remaining).toBe("si");
@@ -74,18 +74,18 @@ describe("strike", () => {
     const start = newPhrase("し", "romaji");
     expect(start.remaining).toBe("si");
 
-    const sh = strike({ phrase: strike({ phrase: start, key: "s" }).phrase, key: "h" }).phrase;
+    const sh = strike(strike(start, "s").phrase, "h").phrase;
     expect(sh.remaining).toBe("i");
 
-    const shi = strike({ phrase: sh, key: "i" });
+    const shi = strike(sh, "i");
     expect(shi.phrase.isDone).toBe(true);
     expect(shi.phrase.typed).toBe("shi");
   });
 
   test("経路から外れる打鍵は、その塊の途中でも受理しない", () => {
-    const s = strike({ phrase: newPhrase("し", "romaji"), key: "s" }).phrase;
+    const s = strike(newPhrase("し", "romaji"), "s").phrase;
 
-    expect(strike({ phrase: s, key: "a" }).isCorrect).toBe(false);
+    expect(strike(s, "a").isCorrect).toBe(false);
     expect(s.remaining).toBe("i");
   });
 
@@ -93,25 +93,25 @@ describe("strike", () => {
     const start = newPhrase("っこ！", "romaji");
 
     expect(start.remaining).toBe("kko!");
-    expect(strike({ phrase: start, key: "x" }).phrase.remaining).toBe("tuko!");
+    expect(strike(start, "x").phrase.remaining).toBe("tuko!");
   });
 
   test("cursor は塊が対応する原文の文字数ぶん進む", () => {
     const start = newPhrase("っこ！", "romaji");
     expect(start.cursor).toBe(0);
 
-    const k = strike({ phrase: start, key: "k" }).phrase;
+    const k = strike(start, "k").phrase;
     expect(k.cursor).toBe(0);
 
-    const kko = strike({ phrase: strike({ phrase: k, key: "k" }).phrase, key: "o" }).phrase;
+    const kko = strike(strike(k, "k").phrase, "o").phrase;
     expect(kko.cursor).toBe(2);
     expect(kko.source.slice(0, kko.cursor)).toBe("っこ");
   });
 
   test("打ち切ったあとの打鍵は受理しない", () => {
-    const cleared = strike({ phrase: newPhrase("あ", "romaji"), key: "a" }).phrase;
+    const cleared = strike(newPhrase("あ", "romaji"), "a").phrase;
 
-    const after = strike({ phrase: cleared, key: "a" });
+    const after = strike(cleared, "a");
     expect(after.isCorrect).toBe(false);
     expect(after.phrase.typed).toBe("a");
     expect(after.phrase.cursor).toBe(1);

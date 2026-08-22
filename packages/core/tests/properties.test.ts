@@ -80,7 +80,7 @@ const anyRatio = fc.double({ min: 0, max: 1, noNaN: true });
 
 const typeKeys = (phrase: Phrase, keys: string) => {
   let current = phrase;
-  for (const key of keys) current = strike({ phrase: current, key }).phrase;
+  for (const key of keys) current = strike(current, key).phrase;
   return current;
 };
 
@@ -90,7 +90,7 @@ const typeGuide = (start: Phrase) => {
   while (!phrase.isDone) {
     const key = phrase.remaining.at(0);
     if (key === undefined) break;
-    const struck = strike({ phrase, key });
+    const struck = strike(phrase, key);
     phrase = struck.phrase;
     if (!struck.isCorrect) {
       missed = true;
@@ -131,7 +131,7 @@ describe("文言を打ち進める性質", () => {
       fc.property(anyRomajiPhrase, anyRatio, (start, ratio) => {
         const phrase = typePrefix(start, ratio);
 
-        const struck = strike({ phrase, key: IMPOSSIBLE_KEY });
+        const struck = strike(phrase, IMPOSSIBLE_KEY);
         expect(struck.isCorrect).toBe(false);
         expect(struck.phrase).toBe(phrase);
       }),
@@ -144,23 +144,31 @@ describe("文言を打ち進める性質", () => {
         const phrase = typePrefix(start, ratio);
         const before = { ...phrase };
 
-        strike({ phrase, key: phrase.remaining.at(0) ?? IMPOSSIBLE_KEY });
-        strike({ phrase, key: IMPOSSIBLE_KEY });
+        strike(phrase, phrase.remaining.at(0) ?? IMPOSSIBLE_KEY);
+        strike(phrase, IMPOSSIBLE_KEY);
 
         expect({ ...phrase }).toEqual(before);
       }),
     );
   });
 
-  test("cursor までの原文は、確定した塊の連結と一致する", () => {
+  test("cursor は後戻りせず、原文の長さを超えない", () => {
     fc.assert(
-      fc.property(anyRomajiPhrase, anyRatio, (start, ratio) => {
-        const phrase = typePrefix(start, ratio);
-        const settled = phrase.chunks.slice(0, phrase.index);
+      fc.property(anyRomajiPhrase, (start) => {
+        let phrase = start;
+        let cursor = 0;
 
-        expect(phrase.source.slice(0, phrase.cursor)).toBe(
-          settled.map((chunk) => chunk.chars).join(""),
-        );
+        while (!phrase.isDone) {
+          const key = phrase.remaining.at(0);
+          if (key === undefined) break;
+          phrase = strike(phrase, key).phrase;
+
+          expect(phrase.cursor).toBeGreaterThanOrEqual(cursor);
+          expect(phrase.cursor).toBeLessThanOrEqual(phrase.source.length);
+          cursor = phrase.cursor;
+        }
+
+        expect(phrase.cursor).toBe(phrase.source.length);
       }),
     );
   });

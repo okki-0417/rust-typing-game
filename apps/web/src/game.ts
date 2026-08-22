@@ -79,7 +79,7 @@ export function createGame({ challenges, durationMs }: GameOptions): Game {
       game.tick(now);
       if (phase !== "playing") return null;
 
-      const struck = strike({ phrase, key });
+      const struck = strike(phrase, key);
       phrase = struck.phrase;
       if (!struck.isCorrect) {
         misses++;

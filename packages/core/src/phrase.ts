@@ -1,7 +1,9 @@
 import type { Chunk } from "./chunk.ts";
 import { interpret } from "./interpret.ts";
 import type { Mode } from "./interpret.ts";
-import { newJudgement, preferred } from "./judgement.ts";
+import { isAccepted, isCompleted, newJudgement, preferred } from "./judgement.ts";
+
+export const PROGRESS = Symbol("progress");
 
 export interface Progress {
   readonly source: string;
@@ -11,10 +13,18 @@ export interface Progress {
   readonly typed: string;
 }
 
-export interface Phrase extends Progress {
+export interface Phrase {
+  readonly source: string;
+  readonly typed: string;
   readonly remaining: string;
   readonly cursor: number;
   readonly isDone: boolean;
+  readonly [PROGRESS]: Progress;
+}
+
+export interface Struck {
+  readonly phrase: Phrase;
+  readonly isCorrect: boolean;
 }
 
 export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
@@ -23,14 +33,37 @@ export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
   return phraseAt({ source, chunks, index: 0, inputs: "", typed: "" });
 }
 
-export function phraseAt(progress: Progress): Phrase {
-  const { chunks, index, inputs } = progress;
+export function strike(phrase: Phrase, key: string): Struck {
+  const progress = phrase[PROGRESS];
+  const chunk = progress.chunks[progress.index];
+  if (!chunk) return { phrase, isCorrect: false };
+
+  const inputs = progress.inputs + key;
+  const judgement = newJudgement(chunk, inputs);
+  if (!isAccepted(judgement)) return { phrase, isCorrect: false };
+
+  const settled = isCompleted(judgement);
+  return {
+    phrase: phraseAt({
+      ...progress,
+      index: settled ? progress.index + 1 : progress.index,
+      inputs: settled ? "" : inputs,
+      typed: progress.typed + key,
+    }),
+    isCorrect: true,
+  };
+}
+
+function phraseAt(progress: Progress): Phrase {
+  const { source, chunks, index, inputs, typed } = progress;
 
   return {
-    ...progress,
+    source,
+    typed,
     remaining: remainingKeys(chunks, index, inputs),
     cursor: sourceCursor(chunks, index),
     isDone: index >= chunks.length,
+    [PROGRESS]: progress,
   };
 }
 
