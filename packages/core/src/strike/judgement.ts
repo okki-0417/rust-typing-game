@@ -1,13 +1,12 @@
 import type { Chunk } from "../phrase.ts";
 
 export interface Judgement {
-  readonly chunk: Chunk;
   readonly inputs: string;
   readonly surviving: readonly string[];
 }
 
 export function newJudgement(chunk: Chunk, inputs: string): Judgement {
-  return { chunk, inputs, surviving: chunk.paths.filter((path) => path.startsWith(inputs)) };
+  return { inputs, surviving: chunk.paths.filter((path) => path.startsWith(inputs)) };
 }
 
 export function isAccepted(judgement: Judgement): boolean {
