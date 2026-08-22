@@ -3,6 +3,8 @@ import { interpret } from "./interpret.ts";
 import type { Mode } from "./interpret.ts";
 import { isAccepted, isCompleted, newJudgement, preferred } from "./judgement.ts";
 
+// WHY NOT: 本来は private フィールドで隠すべきだが、TS はモジュールをまたぐと
+// 非公開にできないため、外から名前を書けない symbol をキーにして進捗を持たせる
 export const PROGRESS = Symbol("progress");
 
 export interface Progress {
