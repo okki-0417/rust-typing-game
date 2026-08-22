@@ -1,4 +1,4 @@
-import { inputs, pending, settled, typing } from "./phrase.ts";
+import { inputs, newSettledPhrase, newTypingPhrase, pending } from "./phrase.ts";
 import type { Phrase } from "./phrase.ts";
 import { isAccepted, isCompleted, newJudgement, preferred } from "./strike/judgement.ts";
 
@@ -14,7 +14,7 @@ export function strike({ phrase, key }: Strike): Phrase | null {
   const judgement = newJudgement(chunk, inputs(phrase) + key);
   if (!isAccepted(judgement)) return null;
 
-  return isCompleted(judgement) ? settled(phrase, key) : typing(phrase, key);
+  return isCompleted(judgement) ? newSettledPhrase(phrase, key) : newTypingPhrase(phrase, key);
 }
 
 export function remaining(phrase: Phrase): string {

@@ -24,19 +24,19 @@ export function newPhrase(source: string, mode: Mode = "ascii"): Phrase {
   return { source, typed: "", [PROGRESS]: { chunks, index: 0, inputs: "" } };
 }
 
-export function typing(phrase: Phrase, key: string): Phrase {
+export function newTypingPhrase(phrase: Phrase, key: string): Phrase {
   const { chunks, index, inputs } = phrase[PROGRESS];
 
-  return newPhraseAt(phrase, key, { chunks, index, inputs: inputs + key });
+  return newPhraseFrom(phrase, key, { chunks, index, inputs: inputs + key });
 }
 
-export function settled(phrase: Phrase, key: string): Phrase {
+export function newSettledPhrase(phrase: Phrase, key: string): Phrase {
   const { chunks, index } = phrase[PROGRESS];
 
-  return newPhraseAt(phrase, key, { chunks, index: index + 1, inputs: "" });
+  return newPhraseFrom(phrase, key, { chunks, index: index + 1, inputs: "" });
 }
 
-function newPhraseAt(phrase: Phrase, key: string, progress: Progress): Phrase {
+function newPhraseFrom(phrase: Phrase, key: string, progress: Progress): Phrase {
   return { source: phrase.source, typed: phrase.typed + key, [PROGRESS]: progress };
 }
 
