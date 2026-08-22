@@ -48,6 +48,16 @@ body {
   background: var(--accent);
 }
 
+.timer__bar.is-draining {
+  animation: drain linear forwards;
+}
+
+@keyframes drain {
+  to {
+    width: 0;
+  }
+}
+
 .hud {
   display: flex;
   gap: 24px;
@@ -126,10 +136,6 @@ body {
   place-items: center;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(3px);
-}
-
-#app[data-phase="playing"] .overlay {
-  display: none;
 }
 
 .panel {
