@@ -1,47 +1,25 @@
-export interface Challenge {
-  readonly text: string;
-  readonly reading: string;
+import tsv from "./challenges.tsv?raw";
+
+export type Challenge = {
+  text: string;
+  reading: string;
+};
+
+export function parseChallenges(tsv: string): Challenge[] {
+  const challenges: Challenge[] = [];
+
+  tsv.split("\n").forEach((line, index) => {
+    if (line.trim() === "" || line.startsWith("#")) return;
+
+    const columns = line.split("\t").map((column) => column.trim());
+    if (columns.length !== 2 || columns.some((column) => column === "")) {
+      throw new TypeError(`${index + 1} 行目は 文言<TAB>読み ではない: ${JSON.stringify(line)}`);
+    }
+
+    challenges.push({ text: columns[0]!, reading: columns[1]! });
+  });
+
+  return challenges;
 }
 
-export const challenges: readonly Challenge[] = [
-  { text: "無限に寿司が回っている", reading: "むげんにすしがまわっている" },
-  { text: "醤油を回してくれる人がいない", reading: "しょうゆをまわしてくれるひとがいない" },
-  { text: "寿司が二周目に入った", reading: "すしがにしゅうめにはいった" },
-  { text: "一番おいしいのは最後", reading: "いちばんおいしいのはさいご" },
-  { text: "コンパイルは通ったが動かない", reading: "こんぱいるはとおったがうごかない" },
-  { text: "本番環境で初めて気づく", reading: "ほんばんかんきょうではじめてきづく" },
-  { text: "犯人は昨日の自分だった", reading: "はんにんはきのうのじぶんだった" },
-  { text: "とりあえず再起動してみる", reading: "とりあえずさいきどうしてみる" },
-  { text: "電源を入れ直すと直った", reading: "でんげんをいれなおすとなおった" },
-  { text: "動いているので触らない", reading: "うごいているのでさわらない" },
-  { text: "仕様ということにしておく", reading: "しようということにしておく" },
-  { text: "明日の自分がなんとかする", reading: "あすのじぶんがなんとかする" },
-  { text: "あとで直すと書いて忘れた", reading: "あとでなおすとかいてわすれた" },
-  { text: "三時間かけて一行直した", reading: "さんじかんかけていちぎょうなおした" },
-  { text: "実装より命名が難しい", reading: "じっそうよりめいめいがむずかしい" },
-  { text: "型が合わないので諦めた", reading: "かたがあわないのであきらめた" },
-  { text: "全部消してから考える", reading: "ぜんぶけしてからかんがえる" },
-  { text: "深夜のリファクタリング", reading: "しんやのりふぁくたりんぐ" },
-  { text: "誰も読まないドキュメント", reading: "だれもよまないどきゅめんと" },
-  { text: "マージしたら壊れた", reading: "まーじしたらこわれた" },
-  { text: "完璧なコードは存在しない", reading: "かんぺきなこーどはそんざいしない" },
-  { text: "会議で発言しないまま終わる", reading: "かいぎではつげんしないままおわる" },
-  { text: "定時で帰る勇気がほしい", reading: "ていじでかえるゆうきがほしい" },
-  { text: "締め切りは今日の朝だった", reading: "しめきりはきょうのあさだった" },
-  { text: "眠いので明日やります", reading: "ねむいのであしたやります" },
-  { text: "猫がキーボードを踏んでいる", reading: "ねこがきーぼーどをふんでいる" },
-  { text: "指が勝手に動いている", reading: "ゆびがかってにうごいている" },
-  { text: "最後の一文字で失敗する", reading: "さいごのいちもじでしっぱいする" },
-  { text: "打ち間違いを打ち直す", reading: "うちまちがいをうちなおす" },
-  { text: "早口言葉は難しい", reading: "はやくちことばはむずかしい" },
-  { text: "しゃっくりが止まらない", reading: "しゃっくりがとまらない" },
-  { text: "ぎゅうぎゅうの満員電車", reading: "ぎゅうぎゅうのまんいんでんしゃ" },
-  { text: "靴下が片方見つからない", reading: "くつしたがかたほうみつからない" },
-  { text: "冷蔵庫の奥に賞味期限", reading: "れいぞうこのおくにしょうみきげん" },
-  { text: "味噌汁が具だくさん", reading: "みそしるがぐだくさん" },
-  { text: "珈琲がもう冷めている", reading: "こーひーがもうさめている" },
-  { text: "目薬がまつげに当たる", reading: "めぐすりがまつげにあたる" },
-  { text: "週末まであと少し", reading: "しゅうまつまであとすこし" },
-  { text: "今日は勝てる気がする", reading: "きょうはかてるきがする" },
-  { text: "お腹が空いたので終わり", reading: "おなかがすいたのでおわり" },
-];
+export const challenges: readonly Challenge[] = parseChallenges(tsv);

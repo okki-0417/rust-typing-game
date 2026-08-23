@@ -14,6 +14,10 @@ export default defineConfig({
         command: "vp build",
         dependsOn: [{ task: "build", from: "dependencies" }],
       },
+      test: {
+        command: "vp test",
+        dependsOn: [{ task: "build", from: "dependencies" }],
+      },
     },
   },
   fmt: {},
