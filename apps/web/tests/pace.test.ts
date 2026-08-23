@@ -6,13 +6,19 @@ describe("requiredPace", () => {
     expect(requiredPace(0)).toBe(60);
   });
 
-  test("時間が経つほど速く打つことを求める", () => {
-    expect(requiredPace(60_000)).toBe(120);
-    expect(requiredPace(120_000)).toBe(180);
+  test("2 分で最高ペースを求めてくる", () => {
+    expect(requiredPace(120_000)).toBe(400);
   });
 
-  test("分の途中でも連続して上がる", () => {
-    expect(requiredPace(30_000)).toBe(90);
+  test("そこを過ぎても要求は上がりつづける", () => {
+    expect(requiredPace(180_000)).toBeGreaterThan(400);
+  });
+
+  test("後半ほど急に上がる", () => {
+    const opening = requiredPace(30_000) - requiredPace(0);
+    const later = requiredPace(120_000) - requiredPace(90_000);
+
+    expect(later).toBeGreaterThan(opening);
   });
 });
 
