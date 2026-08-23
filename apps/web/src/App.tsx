@@ -1,5 +1,6 @@
 import { BreathGauge } from "./components/BreathGauge.tsx";
 import { ChallengeCard } from "./components/ChallengeCard.tsx";
+import { PaceChart } from "./components/PaceChart.tsx";
 import { CheckpointBanner } from "./components/CheckpointBanner.tsx";
 import { ResultScreen } from "./components/ResultScreen.tsx";
 import { Scoreboard } from "./components/Scoreboard.tsx";
@@ -7,8 +8,10 @@ import { StartScreen } from "./components/StartScreen.tsx";
 import { Upcoming } from "./components/Upcoming.tsx";
 import { challenges } from "./data/challenges.ts";
 import { isGasping } from "./game/breath.ts";
+import { reached } from "./game/course.ts";
 import { paceOf } from "./game/pace.ts";
 import { accuracy, rankOf } from "./game/score.ts";
+import { splits } from "./game/splits.ts";
 import {
   breathRatio,
   currentPace,
@@ -66,7 +69,9 @@ export function App() {
           misses={game.misses}
           accuracy={accuracy(strokes(game), game.misses)}
           next={next}
-        />
+        >
+          <PaceChart splits={splits(game)} marks={reached(ran)} />
+        </ResultScreen>
       )}
     </>
   );

@@ -20,8 +20,12 @@ export function metersRun(strokes: number): number {
   return strokes * METERS_PER_STROKE;
 }
 
+export function reached(meters: number): readonly Checkpoint[] {
+  return COURSE.filter((checkpoint) => meters >= checkpoint.meters);
+}
+
 export function passed(meters: number): Checkpoint | undefined {
-  return COURSE.findLast((checkpoint) => meters >= checkpoint.meters);
+  return reached(meters).at(-1);
 }
 
 export function ahead(meters: number): Checkpoint | undefined {

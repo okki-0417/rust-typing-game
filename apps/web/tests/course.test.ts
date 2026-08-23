@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { ahead, crossed, metersRun, passed } from "../src/game/course.ts";
+import { ahead, crossed, metersRun, passed, reached } from "../src/game/course.ts";
 
 describe("metersRun", () => {
   test("打鍵がそのまま距離になる", () => {
@@ -19,6 +19,20 @@ describe("passed", () => {
 
   test("関門のちょうど上は抜けたものとして扱う", () => {
     expect(passed(1_000)?.name).toBe("準備運動");
+  });
+});
+
+describe("reached", () => {
+  test("走り出しはまだ何も抜けていない", () => {
+    expect(reached(0)).toEqual([]);
+  });
+
+  test("抜けた関門を近い順に並べる", () => {
+    expect(reached(12_000).map((checkpoint) => checkpoint.name)).toEqual([
+      "準備運動",
+      "散歩",
+      "ジョギング",
+    ]);
   });
 });
 

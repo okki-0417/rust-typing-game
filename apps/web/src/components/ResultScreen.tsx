@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 type ResultScreenProps = {
   rank: string;
   distance: number;
@@ -8,6 +10,7 @@ type ResultScreenProps = {
   misses: number;
   accuracy: number;
   next: { name: string; meters: number } | undefined;
+  children: ReactNode;
 };
 
 export function ResultScreen({
@@ -20,12 +23,14 @@ export function ResultScreen({
   misses,
   accuracy,
   next,
+  children,
 }: ResultScreenProps) {
   return (
     <div className="overlay">
       <div className="panel">
         <p className="panel__rank">{rank}</p>
         <p className="panel__distance">{(distance / 1000).toFixed(2)} km</p>
+        {children}
         <dl className="result">
           <div>
             <dt>走った時間</dt>
