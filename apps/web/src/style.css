@@ -183,6 +183,23 @@ body {
   color: var(--accent);
 }
 
+.panel__handheld {
+  display: none;
+  margin: 28px 0 0;
+  color: var(--miss);
+  font-size: 14px;
+}
+
+@media (pointer: coarse) {
+  .panel__handheld {
+    display: block;
+  }
+
+  .panel__key {
+    margin-top: 4px;
+  }
+}
+
 .panel__rank {
   margin: 0 0 8px;
   font-size: 40px;
@@ -220,4 +237,43 @@ body {
   font-size: 26px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  #app {
+    padding: 20px;
+  }
+
+  .hud {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+
+  .card {
+    padding: 24px 20px;
+  }
+
+  .card__text {
+    font-size: 22px;
+  }
+
+  .card__guide {
+    font-size: 18px;
+  }
+
+  .upcoming {
+    gap: 12px;
+  }
+
+  .panel__title {
+    font-size: 26px;
+  }
+
+  .panel__rank {
+    font-size: 30px;
+  }
+
+  .result {
+    gap: 16px 24px;
+  }
 }

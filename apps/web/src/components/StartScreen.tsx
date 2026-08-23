@@ -9,6 +9,7 @@ export function StartScreen() {
         </p>
         <p className="panel__note">走るほど要求ペースは上がっていく。</p>
         <p className="panel__note">日本語入力（IME）はオフにしておく。</p>
+        <p className="panel__handheld">物理キーボードがないと走れない。PC で開いてほしい。</p>
         <p className="panel__key">スペースキーでスタート</p>
       </div>
     </div>
