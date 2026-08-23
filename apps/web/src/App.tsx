@@ -1,21 +1,40 @@
+import { BreathGauge } from "./components/BreathGauge.tsx";
 import { ChallengeCard } from "./components/ChallengeCard.tsx";
 import { ResultScreen } from "./components/ResultScreen.tsx";
 import { Scoreboard } from "./components/Scoreboard.tsx";
 import { StartScreen } from "./components/StartScreen.tsx";
-import { TimerBar } from "./components/TimerBar.tsx";
+import { Upcoming } from "./components/Upcoming.tsx";
 import { challenges } from "./data/challenges.ts";
-import { restKeys, restReading, typedKeys, typedReading } from "./game/selectors.ts";
+import { isGasping } from "./game/breath.ts";
+import { paceOf } from "./game/pace.ts";
+import { accuracy, rankOf } from "./game/score.ts";
+import {
+  breathRatio,
+  currentPace,
+  distance,
+  elapsedMs,
+  restKeys,
+  restReading,
+  strokes,
+  targetPace,
+  typedKeys,
+  typedReading,
+} from "./game/selectors.ts";
 import { useTypingGame } from "./hooks/useTypingGame.ts";
 
-const DURATION_MS = 60_000;
-
 export function App() {
-  const game = useTypingGame(challenges, DURATION_MS);
+  const game = useTypingGame(challenges);
 
   return (
     <>
-      <TimerBar durationMs={DURATION_MS} running={game.status === "playing"} />
-      <Scoreboard hits={game.hits} misses={game.misses} cleared={game.cleared} />
+      <BreathGauge ratio={breathRatio(game)} gasping={isGasping(game.breath)} />
+      <Scoreboard
+        distance={distance(game)}
+        pace={currentPace(game)}
+        targetPace={targetPace(game)}
+        behind={currentPace(game) < targetPace(game)}
+        misses={game.misses}
+      />
       <ChallengeCard
         text={game.challenge.text}
         typedReading={typedReading(game)}
@@ -24,13 +43,18 @@ export function App() {
         restKeys={restKeys(game)}
         misses={game.misses}
       />
-      {game.status === "ready" && <StartScreen durationMs={DURATION_MS} />}
+      <Upcoming texts={game.upcoming.map((challenge) => challenge.text)} />
+      {game.status === "ready" && <StartScreen />}
       {game.status === "finished" && (
         <ResultScreen
-          hits={game.hits}
-          misses={game.misses}
+          rank={rankOf(distance(game))}
+          distance={distance(game)}
+          elapsedMs={elapsedMs(game)}
+          averagePace={paceOf(strokes(game), elapsedMs(game))}
           cleared={game.cleared}
-          durationMs={DURATION_MS}
+          strokes={strokes(game)}
+          misses={game.misses}
+          accuracy={accuracy(strokes(game), game.misses)}
         />
       )}
     </>

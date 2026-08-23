@@ -33,29 +33,25 @@ body {
   padding: 32px;
 }
 
-.timer {
-  height: 6px;
+.breath {
+  height: 10px;
   border-radius: 999px;
   background: var(--line);
   overflow: hidden;
 }
 
-.timer__bar {
+.breath__bar {
   display: block;
   height: 100%;
-  width: 100%;
   border-radius: inherit;
   background: var(--accent);
+  transition:
+    width 120ms linear,
+    background-color 200ms ease-out;
 }
 
-.timer__bar.is-draining {
-  animation: drain linear forwards;
-}
-
-@keyframes drain {
-  to {
-    width: 0;
-  }
+.breath__bar.is-gasping {
+  background: var(--miss);
 }
 
 .hud {
@@ -70,6 +66,10 @@ body {
   color: var(--text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.hud__value.is-behind {
+  color: var(--miss);
 }
 
 .card {
@@ -129,6 +129,26 @@ body {
   }
 }
 
+.upcoming {
+  display: flex;
+  gap: 20px;
+  margin: 16px 2px 0;
+  padding: 0;
+  list-style: none;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.upcoming__item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.upcoming__item:first-child {
+  color: var(--text);
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -164,14 +184,22 @@ body {
 }
 
 .panel__rank {
-  margin: 0 0 24px;
+  margin: 0 0 8px;
   font-size: 40px;
   font-weight: 700;
   color: var(--accent);
 }
 
+.panel__distance {
+  margin: 0 0 28px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+
 .result {
   display: flex;
+  flex-wrap: wrap;
   gap: 28px;
   margin: 0;
   justify-content: center;

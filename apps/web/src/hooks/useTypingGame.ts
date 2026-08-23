@@ -3,7 +3,9 @@ import type { Challenge } from "../data/challenges.ts";
 import { createGameState, gameReducer, START_KEY } from "../game/gameReducer.ts";
 import type { GameState } from "../game/gameReducer.ts";
 
-export function useTypingGame(challenges: readonly Challenge[], durationMs: number): GameState {
+const TICK_MS = 100;
+
+export function useTypingGame(challenges: readonly Challenge[]): GameState {
   const [state, dispatch] = useReducer(gameReducer, challenges, createGameState);
 
   useEffect(() => {
@@ -12,7 +14,7 @@ export function useTypingGame(challenges: readonly Challenge[], durationMs: numb
       if (event.key.length !== 1) return;
       if (event.key === START_KEY) event.preventDefault();
 
-      dispatch({ type: "keyPressed", key: event.key });
+      dispatch({ type: "keyPressed", key: event.key, at: Date.now() });
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -22,9 +24,9 @@ export function useTypingGame(challenges: readonly Challenge[], durationMs: numb
   useEffect(() => {
     if (state.status !== "playing") return;
 
-    const timer = setTimeout(() => dispatch({ type: "timeUp" }), durationMs);
-    return () => clearTimeout(timer);
-  }, [state.status, durationMs]);
+    const ticking = setInterval(() => dispatch({ type: "tick", at: Date.now() }), TICK_MS);
+    return () => clearInterval(ticking);
+  }, [state.status]);
 
   return state;
 }
