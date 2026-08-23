@@ -1,9 +1,9 @@
 import { requiredPace } from "./pace.ts";
 
-export const FULL_BREATH = 8;
+export const FULL_BREATH = 30;
 
 const BREATH_PER_STROKE = 1;
-const GASPING_RATIO = 0.3;
+const GASPING_RATIO = 0.5;
 
 export function inhale(breath: number): number {
   return Math.min(FULL_BREATH, breath + BREATH_PER_STROKE);

@@ -6,8 +6,8 @@ describe("requiredPace", () => {
     expect(requiredPace(0)).toBe(60);
   });
 
-  test("2 分で最高ペースを求めてくる", () => {
-    expect(requiredPace(120_000)).toBe(400);
+  test("100 秒で最高ペースを求めてくる", () => {
+    expect(requiredPace(100_000)).toBe(400);
   });
 
   test("そこを過ぎても要求は上がりつづける", () => {

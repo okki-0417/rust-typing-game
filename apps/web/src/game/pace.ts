@@ -1,6 +1,6 @@
 const OPENING_PACE = 60;
 const TOP_PACE = 400;
-const TOP_PACE_AT_MS = 120_000;
+const TOP_PACE_AT_MS = 100_000;
 const RECENT_WINDOW_MS = 5_000;
 
 export function requiredPace(elapsedMs: number): number {

@@ -52,6 +52,6 @@ describe("isGasping", () => {
   });
 
   test("余裕があるうちは息が上がらない", () => {
-    expect(isGasping(FULL_BREATH * 0.5)).toBe(false);
+    expect(isGasping(FULL_BREATH * 0.7)).toBe(false);
   });
 });
