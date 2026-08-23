@@ -49,21 +49,25 @@ describe("走っているあいだ", () => {
     expect(press(running(), "a").breath).toBe(FULL_BREATH);
   });
 
-  test("ミスで息を乱す", () => {
-    const missed = press(running(), "z");
-
-    expect(missed.misses).toBe(1);
-    expect(missed.breath).toBeLessThan(FULL_BREATH);
+  test("ミスを数える", () => {
+    expect(press(running(), "z").misses).toBe(1);
   });
 
   test("ミスでは距離が伸びない", () => {
     expect(press(running(), "z").strokeTimes).toEqual([]);
   });
 
-  test("乱れた息は打鍵で戻る", () => {
-    const missed = press(running(), "z");
+  test("ミスを重ねても息は削られない", () => {
+    const missed = press(running(), "zzzzz");
 
-    expect(press(missed, "a").breath).toBeGreaterThan(missed.breath);
+    expect(missed.breath).toBe(FULL_BREATH);
+    expect(missed.status).toBe("playing");
+  });
+
+  test("減った息は打鍵で戻る", () => {
+    const tired = gameReducer(running(), { type: "tick", at: 3000 });
+
+    expect(press(tired, "a", 3000).breath).toBeGreaterThan(tired.breath);
   });
 
   test("打ち切ると次の文言に進む", () => {
@@ -84,10 +88,6 @@ describe("走っているあいだ", () => {
 
   test("手を止めつづけると息が切れて終わる", () => {
     expect(gameReducer(running(), { type: "tick", at: 60_000 }).status).toBe("finished");
-  });
-
-  test("ミスを重ねても息が切れて終わる", () => {
-    expect(press(running(), "zzz").status).toBe("finished");
   });
 });
 

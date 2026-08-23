@@ -1,7 +1,7 @@
 import { isDone, newPhrase, strike } from "@typing-game/core";
 import type { Phrase } from "@typing-game/core";
 import type { Challenge } from "../data/challenges.ts";
-import { exhale, FULL_BREATH, inhale, isWinded, stumble } from "./breath.ts";
+import { exhale, FULL_BREATH, inhale, isWinded } from "./breath.ts";
 import { createDeck, draw } from "./deck.ts";
 import type { Deck } from "./deck.ts";
 
@@ -66,9 +66,7 @@ function breathe(state: GameState, at: number): GameState {
 
 function typeKey(state: GameState, key: string, at: number): GameState {
   const phrase = strike({ phrase: state.phrase, key });
-  if (!phrase) {
-    return checkBreath({ ...state, misses: state.misses + 1, breath: stumble(state.breath) });
-  }
+  if (!phrase) return { ...state, misses: state.misses + 1 };
 
   const hit = {
     ...state,

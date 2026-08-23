@@ -3,15 +3,10 @@ import { requiredPace } from "./pace.ts";
 export const FULL_BREATH = 8;
 
 const BREATH_PER_STROKE = 1;
-const BREATH_LOST_PER_MISS = 3;
 const GASPING_RATIO = 0.3;
 
 export function inhale(breath: number): number {
   return Math.min(FULL_BREATH, breath + BREATH_PER_STROKE);
-}
-
-export function stumble(breath: number): number {
-  return Math.max(0, breath - BREATH_LOST_PER_MISS);
 }
 
 export function exhale(breath: number, fromMs: number, toMs: number): number {

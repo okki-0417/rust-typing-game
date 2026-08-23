@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { exhale, FULL_BREATH, inhale, isGasping, isWinded, stumble } from "../src/game/breath.ts";
+import { exhale, FULL_BREATH, inhale, isGasping, isWinded } from "../src/game/breath.ts";
 
 describe("inhale", () => {
   test("打鍵は息を戻す", () => {
@@ -8,16 +8,6 @@ describe("inhale", () => {
 
   test("肺活量を超えては溜め込めない", () => {
     expect(inhale(FULL_BREATH)).toBe(FULL_BREATH);
-  });
-});
-
-describe("stumble", () => {
-  test("ミスは打鍵より重い", () => {
-    expect(FULL_BREATH - stumble(FULL_BREATH)).toBeGreaterThan(inhale(0));
-  });
-
-  test("息はマイナスにならない", () => {
-    expect(stumble(1)).toBe(0);
   });
 });
 
