@@ -1,15 +1,15 @@
-import { cursor, remaining } from "@typing-game/core";
+import { remaining, restSource, typedSource } from "@typing-game/core";
 import { FULL_BREATH } from "./breath.ts";
 import type { GameState } from "./gameReducer.ts";
 import { recentPace, requiredPace } from "./pace.ts";
 import { metersRun } from "./score.ts";
 
 export function typedReading(state: GameState): string {
-  return state.phrase.source.slice(0, cursor(state.phrase));
+  return typedSource(state.phrase);
 }
 
 export function restReading(state: GameState): string {
-  return state.phrase.source.slice(cursor(state.phrase));
+  return restSource(state.phrase);
 }
 
 export function typedKeys(state: GameState): string {

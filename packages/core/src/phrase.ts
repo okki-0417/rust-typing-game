@@ -60,6 +60,14 @@ export function cursor(phrase: Phrase): number {
   return chars;
 }
 
+export function typedSource(phrase: Phrase): string {
+  return phrase.source.slice(0, cursor(phrase));
+}
+
+export function restSource(phrase: Phrase): string {
+  return phrase.source.slice(cursor(phrase));
+}
+
 export function isDone(phrase: Phrase): boolean {
   return pending(phrase).length === 0;
 }
