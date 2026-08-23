@@ -7,6 +7,7 @@ type ResultScreenProps = {
   strokes: number;
   misses: number;
   accuracy: number;
+  next: { name: string; meters: number } | undefined;
 };
 
 export function ResultScreen({
@@ -18,6 +19,7 @@ export function ResultScreen({
   strokes,
   misses,
   accuracy,
+  next,
 }: ResultScreenProps) {
   return (
     <div className="overlay">
@@ -50,6 +52,11 @@ export function ResultScreen({
             <dd>{Math.round(accuracy * 100)}%</dd>
           </div>
         </dl>
+        {next && (
+          <p className="panel__chase">
+            あと {(next.meters - distance).toLocaleString("ja-JP")} m で {next.name} だった
+          </p>
+        )}
         <p className="panel__key">スペースキーでもう一度</p>
       </div>
     </div>

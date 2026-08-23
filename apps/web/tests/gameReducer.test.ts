@@ -82,6 +82,17 @@ describe("走っているあいだ", () => {
     expect(press(running(), "ai").upcoming).toHaveLength(2);
   });
 
+  test("関門を跨ぐとその時刻を覚える", () => {
+    const far = press(running(), "ai".repeat(10), 5000);
+
+    expect(far.status).toBe("playing");
+    expect(far.checkpointAt).toBe(5000);
+  });
+
+  test("関門を跨がないうちは時刻が動かない", () => {
+    expect(press(running(), "ai", 5000).checkpointAt).toBe(0);
+  });
+
   test("時間が経つと息が減る", () => {
     expect(gameReducer(running(), { type: "tick", at: 1000 }).breath).toBeLessThan(FULL_BREATH);
   });

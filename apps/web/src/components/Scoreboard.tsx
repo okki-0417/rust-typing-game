@@ -4,9 +4,10 @@ type ScoreboardProps = {
   targetPace: number;
   behind: boolean;
   misses: number;
+  next: { name: string; meters: number } | undefined;
 };
 
-export function Scoreboard({ distance, pace, targetPace, behind, misses }: ScoreboardProps) {
+export function Scoreboard({ distance, pace, targetPace, behind, misses, next }: ScoreboardProps) {
   return (
     <div className="hud">
       <span className="hud__item">
@@ -21,6 +22,14 @@ export function Scoreboard({ distance, pace, targetPace, behind, misses }: Score
       <span className="hud__item">
         ミス <b className="hud__value">{misses}</b>
       </span>
+      {next && (
+        <span className="hud__item">
+          次の関門{" "}
+          <b className="hud__value">
+            {next.name} まで {(next.meters - distance).toLocaleString("ja-JP")} m
+          </b>
+        </span>
+      )}
     </div>
   );
 }

@@ -149,6 +149,49 @@ body {
   color: var(--text);
 }
 
+.banner {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  animation: cheer 2.5s ease-out forwards;
+}
+
+.banner__distance {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--dim);
+}
+
+.banner__name {
+  margin: 6px 0 0;
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 32px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+@keyframes cheer {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -181,6 +224,12 @@ body {
 .panel__key {
   margin-top: 28px;
   color: var(--accent);
+}
+
+.panel__chase {
+  margin: 24px 0 0;
+  color: var(--dim);
+  font-size: 14px;
 }
 
 .panel__handheld {
@@ -271,6 +320,10 @@ body {
 
   .panel__rank {
     font-size: 30px;
+  }
+
+  .banner__name {
+    font-size: 32px;
   }
 
   .result {

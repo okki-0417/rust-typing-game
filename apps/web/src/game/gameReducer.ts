@@ -2,6 +2,7 @@ import { isDone, newPhrase, strike } from "@typing-game/core";
 import type { Phrase } from "@typing-game/core";
 import type { Challenge } from "../data/challenges.ts";
 import { exhale, FULL_BREATH, inhale, isWinded } from "./breath.ts";
+import { crossed, metersRun } from "./course.ts";
 import { createDeck, draw } from "./deck.ts";
 import type { Deck } from "./deck.ts";
 
@@ -21,6 +22,7 @@ export type GameState = {
   misses: number;
   cleared: number;
   breath: number;
+  checkpointAt: number;
   startedAt: number;
   now: number;
 };
@@ -68,11 +70,14 @@ function typeKey(state: GameState, key: string, at: number): GameState {
   const phrase = strike({ phrase: state.phrase, key });
   if (!phrase) return { ...state, misses: state.misses + 1 };
 
+  const strokeTimes = [...state.strokeTimes, at];
+  const checkpoint = crossed(metersRun(state.strokeTimes.length), metersRun(strokeTimes.length));
   const hit = {
     ...state,
     phrase,
-    strokeTimes: [...state.strokeTimes, at],
+    strokeTimes,
     breath: inhale(state.breath),
+    checkpointAt: checkpoint ? at : state.checkpointAt,
   };
   if (!isDone(phrase)) return hit;
 
@@ -85,8 +90,19 @@ function checkBreath(state: GameState): GameState {
 
 function atStartLine(
   at: number,
-): Pick<GameState, "strokeTimes" | "misses" | "cleared" | "breath" | "startedAt" | "now"> {
-  return { strokeTimes: [], misses: 0, cleared: 0, breath: FULL_BREATH, startedAt: at, now: at };
+): Pick<
+  GameState,
+  "strokeTimes" | "misses" | "cleared" | "breath" | "checkpointAt" | "startedAt" | "now"
+> {
+  return {
+    strokeTimes: [],
+    misses: 0,
+    cleared: 0,
+    breath: FULL_BREATH,
+    checkpointAt: at,
+    startedAt: at,
+    now: at,
+  };
 }
 
 function deal(

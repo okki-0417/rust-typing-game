@@ -1,5 +1,6 @@
 import { BreathGauge } from "./components/BreathGauge.tsx";
 import { ChallengeCard } from "./components/ChallengeCard.tsx";
+import { CheckpointBanner } from "./components/CheckpointBanner.tsx";
 import { ResultScreen } from "./components/ResultScreen.tsx";
 import { Scoreboard } from "./components/Scoreboard.tsx";
 import { StartScreen } from "./components/StartScreen.tsx";
@@ -13,6 +14,8 @@ import {
   currentPace,
   distance,
   elapsedMs,
+  justPassed,
+  nextCheckpoint,
   restKeys,
   restReading,
   strokes,
@@ -24,16 +27,20 @@ import { useTypingGame } from "./hooks/useTypingGame.ts";
 
 export function App() {
   const game = useTypingGame(challenges);
+  const ran = distance(game);
+  const next = nextCheckpoint(game);
+  const passing = justPassed(game);
 
   return (
     <>
       <BreathGauge ratio={breathRatio(game)} gasping={isGasping(game.breath)} />
       <Scoreboard
-        distance={distance(game)}
+        distance={ran}
         pace={currentPace(game)}
         targetPace={targetPace(game)}
         behind={currentPace(game) < targetPace(game)}
         misses={game.misses}
+        next={next}
       />
       <ChallengeCard
         text={game.challenge.text}
@@ -44,17 +51,21 @@ export function App() {
         misses={game.misses}
       />
       <Upcoming texts={game.upcoming.map((challenge) => challenge.text)} />
+      {game.status === "playing" && passing && (
+        <CheckpointBanner key={passing.meters} name={passing.name} meters={passing.meters} />
+      )}
       {game.status === "ready" && <StartScreen />}
       {game.status === "finished" && (
         <ResultScreen
-          rank={rankOf(distance(game))}
-          distance={distance(game)}
+          rank={rankOf(ran)}
+          distance={ran}
           elapsedMs={elapsedMs(game)}
           averagePace={paceOf(strokes(game), elapsedMs(game))}
           cleared={game.cleared}
           strokes={strokes(game)}
           misses={game.misses}
           accuracy={accuracy(strokes(game), game.misses)}
+          next={next}
         />
       )}
     </>

@@ -1,8 +1,11 @@
 import { remaining, restSource, typedSource } from "@typing-game/core";
 import { FULL_BREATH } from "./breath.ts";
 import type { GameState } from "./gameReducer.ts";
+import { ahead, metersRun, passed } from "./course.ts";
+import type { Checkpoint } from "./course.ts";
 import { recentPace, requiredPace } from "./pace.ts";
-import { metersRun } from "./score.ts";
+
+const CELEBRATION_MS = 2_500;
 
 export function typedReading(state: GameState): string {
   return typedSource(state.phrase);
@@ -42,4 +45,12 @@ export function currentPace(state: GameState): number {
 
 export function targetPace(state: GameState): number {
   return requiredPace(elapsedMs(state));
+}
+
+export function nextCheckpoint(state: GameState): Checkpoint | undefined {
+  return ahead(distance(state));
+}
+
+export function justPassed(state: GameState): Checkpoint | undefined {
+  return state.now - state.checkpointAt < CELEBRATION_MS ? passed(distance(state)) : undefined;
 }
