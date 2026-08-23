@@ -1,12 +1,12 @@
 const OPENING_PACE = 60;
-const TOP_PACE = 400;
-const TOP_PACE_AT_MS = 100_000;
+const CHECKPOINT_MS = 100_000;
+const CHECKPOINT_PACE = 400;
 const RECENT_WINDOW_MS = 5_000;
 
 export function requiredPace(elapsedMs: number): number {
-  const climbed = elapsedMs / TOP_PACE_AT_MS;
+  const climbed = elapsedMs / CHECKPOINT_MS;
 
-  return OPENING_PACE + (TOP_PACE - OPENING_PACE) * climbed * climbed;
+  return OPENING_PACE + (CHECKPOINT_PACE - OPENING_PACE) * climbed * climbed;
 }
 
 export function recentPace(strokeTimes: readonly number[], now: number, elapsedMs: number): number {

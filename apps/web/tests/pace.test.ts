@@ -6,12 +6,17 @@ describe("requiredPace", () => {
     expect(requiredPace(0)).toBe(60);
   });
 
-  test("100 秒で最高ペースを求めてくる", () => {
+  test("100 秒の関門で 400 打/分を求めてくる", () => {
     expect(requiredPace(100_000)).toBe(400);
   });
 
-  test("そこを過ぎても要求は上がりつづける", () => {
-    expect(requiredPace(180_000)).toBeGreaterThan(400);
+  test("関門を過ぎても頭打ちにならない", () => {
+    expect(requiredPace(200_000)).toBeGreaterThan(1_000);
+    expect(requiredPace(400_000)).toBeGreaterThan(5_000);
+  });
+
+  test("どれだけ速い走者もいつかは追い越す", () => {
+    expect(requiredPace(3_600_000)).toBeGreaterThan(100_000);
   });
 
   test("後半ほど急に上がる", () => {
